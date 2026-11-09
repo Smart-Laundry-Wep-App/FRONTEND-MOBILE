@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'constants/colors.dart';
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/info_layanan_screen.dart';
+import 'screens/jam_operasional_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/promo_screen.dart';
+import 'screens/register_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,18 +51,24 @@ class ScreenPreviewShell extends StatefulWidget {
 }
 
 class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
-  int _activeScreenIndex = 0; // 0: Login, 1: Register, 2: Dashboard
+  int _activeScreenIndex = 0; // 0: Login, 1: Register, 2: Dashboard, 3: Layanan, 4: Jam Kerja, 5: Promo
 
   final List<Widget> _screens = const [
     LoginScreen(),
     RegisterScreen(),
     DashboardScreen(),
+    InfoLayananScreen(),
+    JamOperasionalScreen(),
+    PromoScreen(),
   ];
 
   final List<String> _screenTitles = const [
     'Login',
     'Register',
     'Dashboard',
+    'Layanan',
+    'Jam Kerja',
+    'Promo',
   ];
 
   @override
@@ -72,17 +81,18 @@ class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
           children: _screens,
         ),
 
-        // Floating Quick Switcher Pill (Top Right, unobtrusive)
+        // Floating Quick Switcher Pill (Top, discreet & convenient)
         Positioned(
-          top: 12,
+          top: 10,
           right: 12,
           child: SafeArea(
             child: Material(
               color: Colors.transparent,
               child: Container(
+                constraints: const BoxConstraints(maxWidth: 320),
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B).withValues(alpha: 0.88),
+                  color: const Color(0xFF1E293B).withValues(alpha: 0.90),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -92,44 +102,48 @@ class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(_screenTitles.length, (index) {
-                    final isSelected = _activeScreenIndex == index;
-                    return InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        setState(() {
-                          _activeScreenIndex = index;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          _screenTitles[index],
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 10.5,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(_screenTitles.length, (index) {
+                      final isSelected = _activeScreenIndex == index;
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          setState(() {
+                            _activeScreenIndex = index;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 9,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
                             color: isSelected
-                                ? Colors.white
-                                : Colors.white.withValues(alpha: 0.75),
+                                ? AppColors.primary
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            _screenTitles[index],
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 10,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? Colors.white
+                                  : Colors.white.withValues(alpha: 0.75),
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 ),
               ),
             ),

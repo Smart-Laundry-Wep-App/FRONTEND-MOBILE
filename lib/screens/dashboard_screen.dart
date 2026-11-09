@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
+import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
+import 'info_layanan_screen.dart';
+import 'jam_operasional_screen.dart';
 import 'login_screen.dart';
+import 'promo_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -11,12 +15,37 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _currentNavIndex = 1; // Default "Layanan" or first
+  final int _currentNavIndex = 2; // Center / Home Dashboard
 
   void _onNavTap(int index) {
-    setState(() {
-      _currentNavIndex = index;
-    });
+    if (index == 1) {
+      // 1. Toggle Layanan ke Info Layanan
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const InfoLayananScreen()),
+      );
+    } else if (index == 3) {
+      // 2. Jam Kerja ke Jam Operasional
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const JamOperasionalScreen()),
+      );
+    } else if (index == 0) {
+      _showActionFeedback('Riwayat');
+    } else if (index == 4) {
+      _showActionFeedback('Profile');
+    }
+  }
+
+  void _navigateToPromo() {
+    // 3. Promo ke Page Promo
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PromoScreen()),
+    );
+  }
+
+  void _navigateToInfoLayanan() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const InfoLayananScreen()),
+    );
   }
 
   void _showActionFeedback(String actionName) {
@@ -246,6 +275,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           onTap: () => _showActionFeedback('Pesanan'),
                         ),
+                        // 3. Flow Promo -> Page Promo
                         _buildQuickActionItem(
                           label: 'Promo',
                           icon: const Icon(
@@ -253,7 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             color: AppColors.primary,
                             size: 26,
                           ),
-                          onTap: () => _showActionFeedback('Promo'),
+                          onTap: _navigateToPromo,
                         ),
                         _buildQuickActionItem(
                           label: 'Tracking',
@@ -290,7 +320,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => _showActionFeedback('Lihat Semua'),
+                          onTap: _navigateToInfoLayanan,
                           child: const Text(
                             'Lihat Semua',
                             style: TextStyle(
@@ -305,7 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // 3 Service Cards
+                    // 3 Service Cards (Tapping also opens Info Layanan)
                     Row(
                       children: [
                         Expanded(
@@ -315,7 +345,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               size: 44,
                               color: AppColors.primary,
                             ),
-                            onTap: () => _showActionFeedback('Cuci Kering'),
+                            onTap: _navigateToInfoLayanan,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -326,7 +356,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               size: 44,
                               color: AppColors.primary,
                             ),
-                            onTap: () => _showActionFeedback('Cuci Setrika'),
+                            onTap: _navigateToInfoLayanan,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -337,7 +367,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               size: 44,
                               color: AppColors.primary,
                             ),
-                            onTap: () => _showActionFeedback('Express'),
+                            onTap: _navigateToInfoLayanan,
                           ),
                         ),
                       ],
@@ -349,108 +379,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
 
             // Bottom Navigation Bar
-            Container(
-              height: 68,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: const Border(
-                  top: BorderSide(
-                    color: Color(0xFFF1F3F7),
-                    width: 1.2,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  // Nav 0: Riwayat
-                  _buildNavItem(
-                    index: 0,
-                    label: 'Riwayat',
-                    icon: HistoryPieIcon(
-                      size: 20,
-                      color: _currentNavIndex == 0
-                          ? AppColors.primary
-                          : AppColors.textDark,
-                    ),
-                  ),
-
-                  // Nav 1: Layanan
-                  _buildNavItem(
-                    index: 1,
-                    label: 'Layanan',
-                    icon: LayoutGridIcon(
-                      size: 20,
-                      color: _currentNavIndex == 1
-                          ? AppColors.primary
-                          : AppColors.textDark,
-                    ),
-                  ),
-
-                  // Nav 2: Center Floating + Button
-                  GestureDetector(
-                    onTap: () => _showActionFeedback('Tambah Pesanan'),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: const Color(0xFFE2E8F0),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.add,
-                          size: 26,
-                          color: AppColors.textDark,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Nav 3: Jam Kerja
-                  _buildNavItem(
-                    index: 3,
-                    label: 'Jam Kerja',
-                    icon: ClockArrowIcon(
-                      size: 20,
-                      color: _currentNavIndex == 3
-                          ? AppColors.primary
-                          : AppColors.textDark,
-                    ),
-                  ),
-
-                  // Nav 4: Profile
-                  _buildNavItem(
-                    index: 4,
-                    label: 'Profile',
-                    icon: Icon(
-                      Icons.person_rounded,
-                      size: 22,
-                      color: _currentNavIndex == 4
-                          ? AppColors.primary
-                          : AppColors.textDark,
-                    ),
-                  ),
-                ],
-              ),
+            AppBottomNavBar(
+              currentIndex: _currentNavIndex,
+              onItemSelected: _onNavTap,
             ),
           ],
         ),
@@ -546,33 +477,4 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
-
-  Widget _buildNavItem({
-    required int index,
-    required String label,
-    required Widget icon,
-  }) {
-    final isSelected = _currentNavIndex == index;
-    return GestureDetector(
-      onTap: () => _onNavTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          icon,
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 10,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? AppColors.primary : AppColors.textDark,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-
