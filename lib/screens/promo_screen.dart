@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+
 import '../constants/colors.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
@@ -6,10 +9,14 @@ import 'dashboard_screen.dart';
 class PromoItemData {
   final Widget icon;
   final String title;
+  final String promoTitle;
+  final String validity;
 
   const PromoItemData({
     required this.icon,
     required this.title,
+    required this.promoTitle,
+    required this.validity,
   });
 }
 
@@ -32,6 +39,8 @@ class _PromoScreenState extends State<PromoScreen> {
         size: 22,
       ),
       title: 'Promo Kemerdekaan Indonesia.',
+      promoTitle: 'Dirgahayu Indonesia',
+      validity: '17-18 Agustus',
     ),
     PromoItemData(
       icon: Icon(
@@ -40,14 +49,14 @@ class _PromoScreenState extends State<PromoScreen> {
         size: 22,
       ),
       title: 'Gratis Ongkir Untuk Lokasi Tertentu.',
+      promoTitle: 'Gratis Ongkir',
+      validity: 'Syarat & Ketentuan Berlaku',
     ),
     PromoItemData(
-      icon: Icon(
-        Icons.percent_rounded,
-        color: AppColors.primary,
-        size: 22,
-      ),
+      icon: Icon(Icons.percent_rounded, color: AppColors.primary, size: 22),
       title: 'Potongan 15% S&K Berlaku.',
+      promoTitle: 'Diskon 15%',
+      validity: 'Syarat & Ketentuan Berlaku',
     ),
   ];
 
@@ -78,6 +87,191 @@ class _PromoScreenState extends State<PromoScreen> {
     );
   }
 
+  Future<void> _showPromoDetails({
+    required String badge,
+    required String title,
+    required String validity,
+  }) async {
+    final claimed = await showGeneralDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Tutup detail promo',
+      barrierColor: const Color(0xB31C2438),
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(10, 9, 9, 9),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppColors.inputBorder, width: 1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          badge,
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 9,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 22,
+                          height: 1.05,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Berlaku S/D',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 9,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                              Text(
+                                validity,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                          _PromoDialogButton(
+                            label: 'Klaim Promo',
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(scale: curved, child: child),
+        );
+      },
+    );
+
+    if (claimed == true && mounted) {
+      await _showClaimSuccess();
+    }
+  }
+
+  Future<void> _showClaimSuccess() {
+    return showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Tutup konfirmasi promo',
+      barrierColor: const Color(0xB31C2438),
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+          child: Center(
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(horizontal: 12),
+              padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 31,
+                    color: Color(0xFF00D632),
+                  ),
+                  const SizedBox(height: 3),
+                  const Text(
+                    'Kode Promo\nbenar',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 12,
+                      height: 1.2,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textDark,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  _PromoDialogButton(
+                    label: 'Pakai Promo',
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(scale: curved, child: child),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,7 +281,10 @@ class _PromoScreenState extends State<PromoScreen> {
           children: [
             // Top Header: Back Button + Title + Ticket Icon
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 14.0,
+              ),
               child: Row(
                 children: [
                   CircleBackButton(onTap: _onKembali),
@@ -105,10 +302,7 @@ class _PromoScreenState extends State<PromoScreen> {
                       ),
                     ),
                   ),
-                  const CouponTicketIcon(
-                    size: 24,
-                    color: AppColors.primary,
-                  ),
+                  const CouponTicketIcon(size: 24, color: AppColors.primary),
                 ],
               ),
             ),
@@ -221,8 +415,11 @@ class _PromoScreenState extends State<PromoScreen> {
                                 ],
                               ),
                               ElevatedButton(
-                                onPressed: () =>
-                                    _showFeedback('Promo Mahasiswa Baru berhasil diklaim!'),
+                                onPressed: () => _showPromoDetails(
+                                  badge: 'Promo Maba',
+                                  title: 'Diskon 20%',
+                                  validity: '1-31 Agustus',
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
@@ -330,17 +527,23 @@ class _PromoScreenState extends State<PromoScreen> {
                           ElevatedButton(
                             onPressed: () {
                               if (_voucherController.text.trim().isNotEmpty) {
-                                _showFeedback('Kode "${_voucherController.text}" berhasil dikirim!');
+                                _showFeedback(
+                                  'Kode "${_voucherController.text}" berhasil dikirim!',
+                                );
                                 _voucherController.clear();
                               } else {
-                                _showFeedback('Silahkan masukkan kode voucher.');
+                                _showFeedback(
+                                  'Silahkan masukkan kode voucher.',
+                                );
                               }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -426,7 +629,13 @@ class _PromoScreenState extends State<PromoScreen> {
                                 ),
                               ),
                               ElevatedButton(
-                                onPressed: () => _showFeedback('Mengecek: ${promo.title}'),
+                                onPressed: () => _showPromoDetails(
+                                  badge: promo.title.startsWith('Promo')
+                                      ? 'Promo Kemerdekaan'
+                                      : 'Promo Spesial',
+                                  title: promo.promoTitle,
+                                  validity: promo.validity,
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
@@ -464,7 +673,8 @@ class _PromoScreenState extends State<PromoScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: ElevatedButton(
-                onPressed: () => _showFeedback('Membuka form pemesanan laundry...'),
+                onPressed: () =>
+                    _showFeedback('Membuka form pemesanan laundry...'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -491,3 +701,35 @@ class _PromoScreenState extends State<PromoScreen> {
   }
 }
 
+class _PromoDialogButton extends StatelessWidget {
+  const _PromoDialogButton({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 26,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+}
