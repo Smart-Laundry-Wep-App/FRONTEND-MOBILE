@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import 'order_flow_screens.dart';
 
-class PesanLaundryScreen extends StatelessWidget {
+class PesanLaundryScreen extends StatefulWidget {
   const PesanLaundryScreen({super.key});
 
+  @override
+  State<PesanLaundryScreen> createState() => _PesanLaundryScreenState();
+}
+
+class _PesanLaundryScreenState extends State<PesanLaundryScreen> {
   static const _steps = [
     (
       title: 'Pilih Layanan & Kategori',
@@ -75,10 +81,14 @@ class PesanLaundryScreen extends StatelessWidget {
                   padding: EdgeInsets.only(
                     bottom: index == _steps.length - 1 ? 0 : 9,
                   ),
-                  child: _OrderStepCard(
-                    number: index + 1,
-                    title: step.title,
-                    description: step.description,
+                  child: InkWell(
+                    onTap: () => _openOrderStep(index),
+                    borderRadius: BorderRadius.circular(14),
+                    child: _OrderStepCard(
+                      number: index + 1,
+                      title: step.title,
+                      description: step.description,
+                    ),
                   ),
                 );
               }),
@@ -87,7 +97,7 @@ class PesanLaundryScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 42,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () => _openOrderStep(0),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -113,6 +123,17 @@ class PesanLaundryScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _openOrderStep(int index) {
+    final order = LaundryOrderDraft();
+    final Widget page = switch (index) {
+      0 => OrderCategoryScreen(order: order),
+      1 => OrderDetailsScreen(order: order),
+      2 => OrderConfirmationScreen(order: order),
+      _ => OrderPaymentScreen(order: order),
+    };
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
   }
 }
 
