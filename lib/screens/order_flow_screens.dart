@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import 'dashboard_screen.dart';
 
 class LaundryOrderDraft {
   bool delivery = false;
@@ -300,10 +301,9 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
   static const _wallets = ['Gopay', 'Dana', 'ShopeePay', 'OVO'];
 
   void _continue() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Pesanan siap diproses setelah pembayaran dikonfirmasi.'),
-        behavior: SnackBarBehavior.floating,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PaymentSuccessScreen(order: widget.order),
       ),
     );
   }
@@ -312,7 +312,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
   Widget build(BuildContext context) {
     return _OrderPage(
       title: 'PEMBAYARAN',
-      bottom: _ContinueButton(label: 'Lanjutkan', onPressed: _continue),
+      bottom: _ContinueButton(label: 'Lanjut', onPressed: _continue),
       child: Column(
         children: [
           SizedBox(
@@ -462,6 +462,132 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class PaymentSuccessScreen extends StatelessWidget {
+  const PaymentSuccessScreen({super.key, required this.order});
+
+  final LaundryOrderDraft order;
+
+  @override
+  Widget build(BuildContext context) {
+    return _OrderPage(
+      title: 'PEMBAYARAN',
+      bottom: _ContinueButton(
+        label: 'Check Pesanan',
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => PaidOrderSummaryScreen(order: order),
+            ),
+          );
+        },
+      ),
+      child: Center(
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(minHeight: 245),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 34),
+          decoration: _cardDecoration(),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.check_circle_outline_rounded,
+                size: 78,
+                color: Color(0xFF00C853),
+              ),
+              SizedBox(height: 32),
+              Text(
+                'Pembayaran berhasil\ndan selesai. Terimakasih',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 18,
+                  height: 1.3,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PaidOrderSummaryScreen extends StatelessWidget {
+  const PaidOrderSummaryScreen({super.key, required this.order});
+
+  final LaundryOrderDraft order;
+
+  @override
+  Widget build(BuildContext context) {
+    return _OrderPage(
+      title: 'Detail Pesanan',
+      bottom: _ContinueButton(
+        label: 'Beranda',
+        onPressed: () {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const DashboardScreen()),
+            (route) => false,
+          );
+        },
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: _cardDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Ringkasan Pesanan',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Cuci Kering - Reguler',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _SummaryRow('Berat Total', '${order.kilograms} kg'),
+            _SummaryRow('Total harga', 'Rp ${_formatCurrency(order.total)}'),
+            const _SummaryRow('Ongkir', 'Free'),
+            const SizedBox(height: 14),
+            const Text(
+              'Estimasi',
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _SummaryRow(
+              _dateLabel(order.pickupDate),
+              '${order.pickupTime} WIB',
+            ),
+            const SizedBox(height: 18),
+            _outlinedSummaryRow('Sedang di proses', ''),
+          ],
+        ),
       ),
     );
   }
