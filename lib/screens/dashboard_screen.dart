@@ -6,6 +6,7 @@ import '../widgets/custom_icons.dart';
 import 'info_layanan_screen.dart';
 import 'jam_operasional_screen.dart';
 import 'login_screen.dart';
+import 'pusat_bantuan_screen.dart';
 import 'pesan_laundry_screen.dart';
 import 'promo_screen.dart';
 
@@ -45,6 +46,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _navigateToPesanan() {
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const PesanLaundryScreen()));
+  }
+
+  void _navigateToPusatBantuan() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const PusatBantuanScreen()));
   }
 
   void _navigateToInfoLayanan() {
@@ -311,7 +317,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             color: AppColors.primary,
                             size: 26,
                           ),
-                          onTap: () => _showActionFeedback('Hubungi'),
+                          onTap: _navigateToPusatBantuan,
                         ),
                       ],
                     ),
