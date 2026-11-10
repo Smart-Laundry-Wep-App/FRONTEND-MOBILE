@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+
 import '../constants/colors.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'info_layanan_screen.dart';
 import 'jam_operasional_screen.dart';
 import 'login_screen.dart';
+import 'pesan_laundry_screen.dart';
 import 'promo_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -20,14 +22,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _onNavTap(int index) {
     if (index == 1) {
       // 1. Toggle Layanan ke Info Layanan
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const InfoLayananScreen()),
-      );
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const InfoLayananScreen()));
     } else if (index == 3) {
       // 2. Jam Kerja ke Jam Operasional
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const JamOperasionalScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const JamOperasionalScreen()));
     } else if (index == 0) {
       _showActionFeedback('Riwayat');
     } else if (index == 4) {
@@ -37,15 +38,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   void _navigateToPromo() {
     // 3. Promo ke Page Promo
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PromoScreen()),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const PromoScreen()));
+  }
+
+  void _navigateToPesanan() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const PesanLaundryScreen()));
   }
 
   void _navigateToInfoLayanan() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const InfoLayananScreen()),
-    );
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const InfoLayananScreen()));
   }
 
   void _showActionFeedback(String actionName) {
@@ -103,7 +107,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             // Top App Bar / Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 14.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -113,9 +120,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Container(
                         width: 34,
                         height: 34,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                        ),
+                        decoration: const BoxDecoration(shape: BoxShape.circle),
                         child: Image.asset(
                           'assets/images/logo_circle.png',
                           fit: BoxFit.contain,
@@ -155,7 +160,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onTap: _onLogout,
                     borderRadius: BorderRadius.circular(20),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 2,
+                      ),
                       child: Row(
                         children: [
                           Column(
@@ -219,7 +227,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Hero Banner Card
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 26.0, horizontal: 16.0),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 26.0,
+                        horizontal: 16.0,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(16),
@@ -273,7 +284,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             color: AppColors.primary,
                             size: 26,
                           ),
-                          onTap: () => _showActionFeedback('Pesanan'),
+                          onTap: _navigateToPesanan,
                         ),
                         // 3. Flow Promo -> Page Promo
                         _buildQuickActionItem(
@@ -404,10 +415,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             decoration: BoxDecoration(
               color: AppColors.actionCardBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: AppColors.cardBorder,
-                width: 1.2,
-              ),
+              border: Border.all(color: AppColors.cardBorder, width: 1.2),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.02),
@@ -445,10 +453,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: AppColors.cardBorder,
-            width: 1.2,
-          ),
+          border: Border.all(color: AppColors.cardBorder, width: 1.2),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.025),
