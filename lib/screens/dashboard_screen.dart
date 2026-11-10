@@ -6,6 +6,7 @@ import '../widgets/custom_icons.dart';
 import 'info_layanan_screen.dart';
 import 'jam_operasional_screen.dart';
 import 'login_screen.dart';
+import 'gps_tracking_screen.dart';
 import 'pusat_bantuan_screen.dart';
 import 'pesan_laundry_screen.dart';
 import 'promo_screen.dart';
@@ -51,6 +52,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _navigateToPusatBantuan() {
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const PusatBantuanScreen()));
+  }
+
+  void _navigateToGpsTracking() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const GpsTrackingScreen()));
   }
 
   void _navigateToInfoLayanan() {
@@ -308,7 +314,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             size: 26,
                             color: AppColors.primary,
                           ),
-                          onTap: () => _showActionFeedback('Tracking'),
+                          onTap: _navigateToGpsTracking,
                         ),
                         _buildQuickActionItem(
                           label: 'Hubungi',
