@@ -10,6 +10,7 @@ import 'gps_tracking_screen.dart';
 import 'pusat_bantuan_screen.dart';
 import 'pesan_laundry_screen.dart';
 import 'promo_screen.dart';
+import 'riwayat_pesanan_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -26,13 +27,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // 1. Toggle Layanan ke Info Layanan
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (_) => const InfoLayananScreen()));
+    } else if (index == 2) {
+      // Center + Button -> Langsung ke Pesan Laundry
+      _navigateToPesanan();
     } else if (index == 3) {
       // 2. Jam Kerja ke Jam Operasional
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const JamOperasionalScreen()));
     } else if (index == 0) {
-      _showActionFeedback('Riwayat');
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const RiwayatPesananScreen()),
+      );
     } else if (index == 4) {
       _showActionFeedback('Profile');
     }
@@ -112,6 +118,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final screenWidth = media.size.width;
+    final screenHeight = media.size.height;
+
+    // Responsive scaling based on device width & height
+    final scale = (screenWidth / 375).clamp(1.0, 1.25);
+    final horizontalPadding = (screenWidth * 0.05).clamp(16.0, 24.0);
+
+    // Responsive Quick Action sizes
+    final quickActionBoxSize =
+        ((screenWidth - (horizontalPadding * 2) - (3 * 12)) / 4)
+            .clamp(66.0, 84.0);
+    final quickActionIconSize = (26.0 * scale).clamp(26.0, 32.0);
+    final quickActionFontSize = (11.0 * scale).clamp(11.0, 13.0);
+
+    // Responsive Service Card sizes
+    final serviceCardHeight = (screenWidth * 0.31).clamp(120.0, 150.0);
+    final serviceIconSize = (44.0 * scale).clamp(44.0, 54.0);
+    final serviceTitleSize = (11.5 * scale).clamp(11.5, 13.5);
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -119,8 +145,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             // Top App Bar / Header
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
                 vertical: 14.0,
               ),
               child: Row(
@@ -130,8 +156,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Row(
                     children: [
                       Container(
-                        width: 34,
-                        height: 34,
+                        width: (34.0 * scale).clamp(34.0, 42.0),
+                        height: (34.0 * scale).clamp(34.0, 42.0),
                         decoration: const BoxDecoration(shape: BoxShape.circle),
                         child: Image.asset(
                           'assets/images/logo_circle.png',
@@ -141,12 +167,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(width: 8),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'SCA',
                             style: TextStyle(
                               fontFamily: 'Poppins',
-                              fontSize: 12.5,
+                              fontSize: (12.5 * scale).clamp(12.5, 15.0),
                               fontWeight: FontWeight.w800,
                               color: AppColors.primary,
                               height: 1.1,
@@ -156,7 +182,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             'Smart Laundry',
                             style: TextStyle(
                               fontFamily: 'Poppins',
-                              fontSize: 12.5,
+                              fontSize: (12.5 * scale).clamp(12.5, 15.0),
                               fontWeight: FontWeight.w800,
                               color: AppColors.primary,
                               height: 1.1,
@@ -180,12 +206,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
-                            children: const [
+                            children: [
                               Text(
                                 'Rendra',
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
-                                  fontSize: 12.5,
+                                  fontSize: (12.5 * scale).clamp(12.5, 15.0),
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.textDark,
                                   height: 1.15,
@@ -195,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 'Customer',
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
-                                  fontSize: 10.5,
+                                  fontSize: (10.5 * scale).clamp(10.5, 12.5),
                                   fontWeight: FontWeight.w400,
                                   color: AppColors.textMuted,
                                   height: 1.15,
@@ -206,15 +232,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(width: 8),
                           // User Avatar Silhouette
                           Container(
-                            width: 32,
-                            height: 32,
+                            width: (32.0 * scale).clamp(32.0, 40.0),
+                            height: (32.0 * scale).clamp(32.0, 40.0),
                             decoration: const BoxDecoration(
                               color: Colors.transparent,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.person_rounded,
-                              size: 32,
+                              size: (32.0 * scale).clamp(32.0, 40.0),
                               color: AppColors.textDark,
                             ),
                           ),
@@ -230,7 +256,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -239,9 +265,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Hero Banner Card
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 26.0,
-                        horizontal: 16.0,
+                      padding: EdgeInsets.symmetric(
+                        vertical: (screenHeight * 0.026).clamp(22.0, 34.0),
+                        horizontal: 18.0,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.primary,
@@ -257,12 +283,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'Layanan Laundry',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Poppins',
-                              fontSize: 22,
+                              fontSize: (22.0 * scale).clamp(22.0, 27.0),
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: 0.3,
@@ -274,7 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Poppins',
-                              fontSize: 12.5,
+                              fontSize: (12.5 * scale).clamp(12.5, 15.0),
                               fontWeight: FontWeight.w400,
                               color: Colors.white.withValues(alpha: 0.92),
                               letterSpacing: 0.2,
@@ -283,7 +309,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    SizedBox(height: (screenHeight * 0.022).clamp(18.0, 26.0)),
 
                     // 4 Quick Action Buttons
                     Row(
@@ -291,66 +317,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         _buildQuickActionItem(
                           label: 'Pesanan',
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.shopping_cart_outlined,
                             color: AppColors.primary,
-                            size: 26,
+                            size: quickActionIconSize,
                           ),
                           onTap: _navigateToPesanan,
+                          boxSize: quickActionBoxSize,
+                          fontSize: quickActionFontSize,
                         ),
                         // 3. Flow Promo -> Page Promo
                         _buildQuickActionItem(
                           label: 'Promo',
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.percent_rounded,
                             color: AppColors.primary,
-                            size: 26,
+                            size: quickActionIconSize,
                           ),
                           onTap: _navigateToPromo,
+                          boxSize: quickActionBoxSize,
+                          fontSize: quickActionFontSize,
                         ),
                         _buildQuickActionItem(
                           label: 'Tracking',
-                          icon: const TrackingMapIcon(
-                            size: 26,
+                          icon: TrackingMapIcon(
+                            size: quickActionIconSize,
                             color: AppColors.primary,
                           ),
                           onTap: _navigateToGpsTracking,
+                          boxSize: quickActionBoxSize,
+                          fontSize: quickActionFontSize,
                         ),
                         _buildQuickActionItem(
                           label: 'Hubungi',
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.help_outline_rounded,
                             color: AppColors.primary,
-                            size: 26,
+                            size: quickActionIconSize,
                           ),
                           onTap: _navigateToPusatBantuan,
+                          boxSize: quickActionBoxSize,
+                          fontSize: quickActionFontSize,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 28),
+                    SizedBox(height: (screenHeight * 0.026).clamp(20.0, 30.0)),
 
                     // Section: Info Layanan
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Info Layanan',
                           style: TextStyle(
                             fontFamily: 'Poppins',
-                            fontSize: 16,
+                            fontSize: (16.0 * scale).clamp(16.0, 19.0),
                             fontWeight: FontWeight.w800,
                             color: AppColors.textDark,
                           ),
                         ),
                         GestureDetector(
                           onTap: _navigateToInfoLayanan,
-                          child: const Text(
+                          child: Text(
                             'Lihat Semua',
                             style: TextStyle(
                               fontFamily: 'Poppins',
-                              fontSize: 12,
+                              fontSize: (12.0 * scale).clamp(12.0, 14.0),
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textDark,
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
@@ -364,36 +398,301 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: _buildServiceCard(
                             title: 'Cuci Kering',
-                            iconWidget: const WashingMachineIcon(
-                              size: 44,
+                            iconWidget: WashingMachineIcon(
+                              size: serviceIconSize,
                               color: AppColors.primary,
                             ),
                             onTap: _navigateToInfoLayanan,
+                            cardHeight: serviceCardHeight,
+                            fontSize: serviceTitleSize,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildServiceCard(
                             title: 'Cuci Setrika',
-                            iconWidget: const IronIcon(
-                              size: 44,
+                            iconWidget: IronIcon(
+                              size: serviceIconSize,
                               color: AppColors.primary,
                             ),
                             onTap: _navigateToInfoLayanan,
+                            cardHeight: serviceCardHeight,
+                            fontSize: serviceTitleSize,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildServiceCard(
                             title: 'Express',
-                            iconWidget: const TshirtIcon(
-                              size: 44,
+                            iconWidget: TshirtIcon(
+                              size: serviceIconSize,
                               color: AppColors.primary,
                             ),
                             onTap: _navigateToInfoLayanan,
+                            cardHeight: serviceCardHeight,
+                            fontSize: serviceTitleSize,
                           ),
                         ),
                       ],
+                    ),
+                    SizedBox(height: (screenHeight * 0.024).clamp(18.0, 26.0)),
+
+                    // Section: Pesanan Aktif / Status Terkini
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Pesanan Aktif',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: (16.0 * scale).clamp(16.0, 19.0),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _navigateToGpsTracking,
+                          child: Text(
+                            'Lacak Status',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: (12.0 * scale).clamp(12.0, 14.0),
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: _navigateToGpsTracking,
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(
+                          (14.0 * scale).clamp(14.0, 18.0),
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.cardBorder,
+                            width: 1.2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: (48.0 * scale).clamp(48.0, 56.0),
+                              height: (48.0 * scale).clamp(48.0, 56.0),
+                              decoration: BoxDecoration(
+                                color: AppColors.inputFill,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.local_laundry_service_rounded,
+                                  color: AppColors.primary,
+                                  size: 26,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Order #SCA-2841',
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize:
+                                              (12.0 * scale).clamp(12.0, 14.0),
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.textDark,
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE8F9EE),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: const Text(
+                                          'Sedang Dicuci',
+                                          style: TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF0F7638),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Cuci Komplit • 3.5 Kg • Estimasi 16.00 WIB',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize:
+                                          (10.5 * scale).clamp(10.5, 12.0),
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 14,
+                              color: AppColors.textMuted,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: (screenHeight * 0.024).clamp(18.0, 26.0)),
+
+                    // Section: Promo Menarik Banner
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Promo Menarik',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: (16.0 * scale).clamp(16.0, 19.0),
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _navigateToPromo,
+                          child: Text(
+                            'Lihat Promo',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: (12.0 * scale).clamp(12.0, 14.0),
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: _navigateToPromo,
+                      child: Container(
+                        width: double.infinity,
+                        padding: EdgeInsets.all(
+                          (16.0 * scale).clamp(16.0, 20.0),
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1B22A7), Color(0xFF333CBF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.22),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'Promo Spesial',
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Diskon 20% Mahasiswa Baru',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize:
+                                          (15.0 * scale).clamp(15.0, 18.0),
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Gunakan kode promo HEMAT20 sekarang!',
+                                    style: TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize:
+                                          (11.0 * scale).clamp(11.0, 13.0),
+                                      color: Colors.white
+                                          .withValues(alpha: 0.88),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                'Klaim',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -404,6 +703,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Bottom Navigation Bar
             AppBottomNavBar(
               currentIndex: _currentNavIndex,
+              isBeranda: true,
               onItemSelected: _onNavTap,
             ),
           ],
@@ -416,14 +716,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String label,
     required Widget icon,
     required VoidCallback onTap,
+    double boxSize = 66,
+    double fontSize = 11,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
           Container(
-            width: 66,
-            height: 66,
+            width: boxSize,
+            height: boxSize,
             decoration: BoxDecoration(
               color: AppColors.actionCardBg,
               borderRadius: BorderRadius.circular(14),
@@ -441,9 +743,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 7),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Poppins',
-              fontSize: 11,
+              fontSize: fontSize,
               fontWeight: FontWeight.w600,
               color: AppColors.textDark,
             ),
@@ -457,11 +759,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String title,
     required Widget iconWidget,
     required VoidCallback onTap,
+    double cardHeight = 120,
+    double fontSize = 11.5,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 120,
+        height: cardHeight,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(14),
@@ -478,13 +782,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             iconWidget,
-            const SizedBox(height: 14),
+            SizedBox(height: cardHeight * 0.1),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Poppins',
-                fontSize: 11.5,
+                fontSize: fontSize,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textDark,
               ),

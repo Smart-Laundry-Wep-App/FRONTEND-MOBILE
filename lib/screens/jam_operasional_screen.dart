@@ -4,6 +4,7 @@ import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
 import 'info_layanan_screen.dart';
+import 'riwayat_pesanan_screen.dart';
 
 class JamOperasionalScreen extends StatefulWidget {
   const JamOperasionalScreen({super.key});
@@ -15,7 +16,11 @@ class JamOperasionalScreen extends StatefulWidget {
 class _JamOperasionalScreenState extends State<JamOperasionalScreen> {
   void _onBottomNavTap(int index) {
     if (index == 3) return; // Already on Jam Kerja
-    if (index == 1) {
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const RiwayatPesananScreen()),
+      );
+    } else if (index == 1) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const InfoLayananScreen()),
       );
@@ -263,6 +268,7 @@ class _JamOperasionalScreenState extends State<JamOperasionalScreen> {
             // Bottom Navigation Bar
             AppBottomNavBar(
               currentIndex: 3, // Jam Kerja
+              isBeranda: false,
               onItemSelected: _onBottomNavTap,
             ),
           ],

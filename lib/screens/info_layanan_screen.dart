@@ -4,6 +4,7 @@ import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
 import 'jam_operasional_screen.dart';
+import 'riwayat_pesanan_screen.dart';
 
 class ServiceItemData {
   final String title;
@@ -65,7 +66,11 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
 
   void _onBottomNavTap(int index) {
     if (index == 1) return; // Already on Layanan
-    if (index == 2) {
+    if (index == 0) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const RiwayatPesananScreen()),
+      );
+    } else if (index == 2) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
@@ -232,6 +237,7 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
             // Bottom Navigation Bar
             AppBottomNavBar(
               currentIndex: 1, // Layanan
+              isBeranda: false,
               onItemSelected: _onBottomNavTap,
             ),
           ],

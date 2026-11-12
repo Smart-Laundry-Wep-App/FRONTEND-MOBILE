@@ -7,6 +7,7 @@ import 'screens/jam_operasional_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/promo_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/riwayat_pesanan_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,6 +61,7 @@ class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
     InfoLayananScreen(),
     JamOperasionalScreen(),
     PromoScreen(),
+    RiwayatPesananScreen(),
   ];
 
   final List<String> _screenTitles = const [
@@ -69,6 +71,7 @@ class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
     'Layanan',
     'Jam Kerja',
     'Promo',
+    'Riwayat',
   ];
 
   @override
