@@ -7,7 +7,10 @@ import 'dashboard_screen.dart';
 import 'gps_tracking_screen.dart';
 import 'info_layanan_screen.dart';
 import 'jam_operasional_screen.dart';
+<<<<<<< HEAD
 import 'profile_screen.dart';
+=======
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 
 class RiwayatOrderItem {
   final String orderId;
@@ -102,10 +105,13 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const JamOperasionalScreen()),
       );
+<<<<<<< HEAD
     } else if (index == 4) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const ProfileScreen()),
       );
+=======
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
     } else {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -149,12 +155,18 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
                       m,
                       style: TextStyle(
                         fontFamily: 'Poppins',
+<<<<<<< HEAD
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w500,
                         color: isSelected
                             ? AppColors.primary
                             : AppColors.textDark,
+=======
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? AppColors.primary : AppColors.textDark,
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                       ),
                     ),
                     trailing: isSelected
@@ -384,9 +396,15 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
     return GestureDetector(
       onTap: () {
         if (isBerlangsung) {
+<<<<<<< HEAD
           Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const GpsTrackingScreen()));
+=======
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const GpsTrackingScreen()),
+          );
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
         } else {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
@@ -404,7 +422,14 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
+<<<<<<< HEAD
           border: Border.all(color: const Color(0xFFF1F3F7), width: 1.2),
+=======
+          border: Border.all(
+            color: const Color(0xFFF1F3F7),
+            width: 1.2,
+          ),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -480,3 +505,7 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
     );
   }
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50

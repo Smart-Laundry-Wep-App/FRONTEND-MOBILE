@@ -188,6 +188,7 @@ class GpsTrackingScreen extends StatelessWidget {
                       Positioned(
                         right: 7,
                         bottom: 6,
+<<<<<<< HEAD
                         child: Material(
                           color: Colors.white.withValues(alpha: 0.9),
                           shape: const CircleBorder(),
@@ -208,6 +209,12 @@ class GpsTrackingScreen extends StatelessWidget {
                               ),
                             ),
                           ),
+=======
+                        child: Icon(
+                          Icons.fullscreen_rounded,
+                          size: 20,
+                          color: Colors.black.withValues(alpha: 0.8),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                         ),
                       ),
                     ],
@@ -222,6 +229,7 @@ class GpsTrackingScreen extends StatelessWidget {
   }
 }
 
+<<<<<<< HEAD
 class _ExpandedTrackingMapDialog extends StatelessWidget {
   const _ExpandedTrackingMapDialog();
 
@@ -275,6 +283,8 @@ class _ExpandedTrackingMapDialog extends StatelessWidget {
   }
 }
 
+=======
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 class _MapMarkers extends StatelessWidget {
   const _MapMarkers();
 
@@ -394,6 +404,7 @@ class _TrackingMapPainter extends CustomPainter {
 
     final parkPaint = Paint()..color = const Color(0xFFB7E4D0);
     canvas.drawRect(
+<<<<<<< HEAD
       Rect.fromLTWH(
         size.width * 0.08,
         size.height * 0.57,
@@ -418,6 +429,20 @@ class _TrackingMapPainter extends CustomPainter {
         size.width * 0.07,
         size.height * 0.12,
       ),
+=======
+      Rect.fromLTWH(size.width * 0.08, size.height * 0.57,
+          size.width * 0.22, size.height * 0.31),
+      parkPaint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(size.width * 0.63, size.height * 0.05,
+          size.width * 0.10, size.height * 0.22),
+      parkPaint,
+    );
+    canvas.drawRect(
+      Rect.fromLTWH(size.width * 0.56, size.height * 0.51,
+          size.width * 0.07, size.height * 0.12),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
       parkPaint,
     );
 

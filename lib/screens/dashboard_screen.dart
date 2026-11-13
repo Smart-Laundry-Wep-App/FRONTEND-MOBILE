@@ -10,7 +10,10 @@ import 'gps_tracking_screen.dart';
 import 'pusat_bantuan_screen.dart';
 import 'pesan_laundry_screen.dart';
 import 'promo_screen.dart';
+<<<<<<< HEAD
 import 'profile_screen.dart';
+=======
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 import 'riwayat_pesanan_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -37,12 +40,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         context,
       ).push(MaterialPageRoute(builder: (_) => const JamOperasionalScreen()));
     } else if (index == 0) {
+<<<<<<< HEAD
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const RiwayatPesananScreen()));
     } else if (index == 4) {
       Navigator.of(context)
           .push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+=======
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const RiwayatPesananScreen()),
+      );
+    } else if (index == 4) {
+      _showActionFeedback('Profile');
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
     }
   }
 
@@ -72,6 +83,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         .push(MaterialPageRoute(builder: (_) => const InfoLayananScreen()));
   }
 
+<<<<<<< HEAD
+=======
+  void _showActionFeedback(String actionName) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Menu "$actionName" dipilih.'),
+        duration: const Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
   void _onLogout() {
     showDialog(
       context: context,
@@ -119,10 +144,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Responsive Quick Action sizes
     final quickActionBoxSize =
+<<<<<<< HEAD
         ((screenWidth - (horizontalPadding * 2) - (3 * 12)) / 4).clamp(
           66.0,
           84.0,
         );
+=======
+        ((screenWidth - (horizontalPadding * 2) - (3 * 12)) / 4)
+            .clamp(66.0, 84.0);
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
     final quickActionIconSize = (26.0 * scale).clamp(26.0, 32.0);
     final quickActionFontSize = (11.0 * scale).clamp(11.0, 13.0);
 
@@ -510,10 +540,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         'Order #SCA-2841',
                                         style: TextStyle(
                                           fontFamily: 'Poppins',
+<<<<<<< HEAD
                                           fontSize: (12.0 * scale).clamp(
                                             12.0,
                                             14.0,
                                           ),
+=======
+                                          fontSize:
+                                              (12.0 * scale).clamp(12.0, 14.0),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                                           fontWeight: FontWeight.w700,
                                           color: AppColors.textDark,
                                         ),
@@ -525,9 +560,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFE8F9EE),
+<<<<<<< HEAD
                                           borderRadius: BorderRadius.circular(
                                             6,
                                           ),
+=======
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                                         ),
                                         child: const Text(
                                           'Sedang Dicuci',
@@ -546,10 +586,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     'Cuci Komplit • 3.5 Kg • Estimasi 16.00 WIB',
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
+<<<<<<< HEAD
                                       fontSize: (10.5 * scale).clamp(
                                         10.5,
                                         12.0,
                                       ),
+=======
+                                      fontSize:
+                                          (10.5 * scale).clamp(10.5, 12.0),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                                       color: AppColors.textMuted,
                                     ),
                                   ),
@@ -630,9 +675,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       vertical: 3,
                                     ),
                                     decoration: BoxDecoration(
+<<<<<<< HEAD
                                       color: Colors.white.withValues(
                                         alpha: 0.2,
                                       ),
+=======
+                                      color: Colors.white.withValues(alpha: 0.2),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: const Text(
@@ -650,10 +699,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     'Diskon 20% Mahasiswa Baru',
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
+<<<<<<< HEAD
                                       fontSize: (15.0 * scale).clamp(
                                         15.0,
                                         18.0,
                                       ),
+=======
+                                      fontSize:
+                                          (15.0 * scale).clamp(15.0, 18.0),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white,
                                     ),
@@ -663,6 +717,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     'Gunakan kode promo HEMAT20 sekarang!',
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
+<<<<<<< HEAD
                                       fontSize: (11.0 * scale).clamp(
                                         11.0,
                                         13.0,
@@ -670,6 +725,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       color: Colors.white.withValues(
                                         alpha: 0.88,
                                       ),
+=======
+                                      fontSize:
+                                          (11.0 * scale).clamp(11.0, 13.0),
+                                      color: Colors.white
+                                          .withValues(alpha: 0.88),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                                     ),
                                   ),
                                 ],

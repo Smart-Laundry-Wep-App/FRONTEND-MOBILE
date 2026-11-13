@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+<<<<<<< HEAD
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
 
@@ -8,10 +9,18 @@ class LaundryOrderDraft {
   String service = 'Cuci Kering';
   bool delivery = false;
   int quantity = 1;
+=======
+import 'dashboard_screen.dart';
+
+class LaundryOrderDraft {
+  bool delivery = false;
+  int kilograms = 1;
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
   DateTime pickupDate = DateTime(2026, 9, 3);
   String pickupTime = '06.00 - 10.00';
   String paymentMethod = 'QRIS';
 
+<<<<<<< HEAD
   bool get isKiloService =>
       service == 'Cuci Kering' || service == 'Cuci Express';
   String get unit => isKiloService ? 'kg' : 'pcs';
@@ -168,6 +177,9 @@ class _OrderServiceSelectionScreenState
       ),
     );
   }
+=======
+  int get total => kilograms * 10000;
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 }
 
 class OrderCategoryScreen extends StatefulWidget {
@@ -197,6 +209,7 @@ class _OrderCategoryScreenState extends State<OrderCategoryScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _SectionTitle('Kategori'),
+<<<<<<< HEAD
           const SizedBox(height: 8),
           Text(
             'Layanan: ${widget.order.service}',
@@ -207,6 +220,8 @@ class _OrderCategoryScreenState extends State<OrderCategoryScreen> {
               color: AppColors.primary,
             ),
           ),
+=======
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
           const SizedBox(height: 16),
           _SelectableCard(
             selected: !widget.order.delivery,
@@ -315,21 +330,36 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
             decoration: _cardDecoration(),
+<<<<<<< HEAD
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   widget.order.serviceDisplayName,
                   style: const TextStyle(
+=======
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Cuci Kering - Reguler',
+                  style: TextStyle(
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                     fontFamily: 'Poppins',
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
                 ),
+<<<<<<< HEAD
                 const SizedBox(height: 5),
                 Text(
                   widget.order.priceLabel,
+=======
+                SizedBox(height: 5),
+                Text(
+                  'Rp. 10.000/kg',
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 14,
@@ -344,12 +374,21 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           Row(
             children: [
               const Expanded(child: _SectionTitle('Jumlah')),
+<<<<<<< HEAD
               _SmallValue(widget.order.quantityLabel),
               const SizedBox(width: 14),
               _QuantityButton(
                 icon: Icons.remove,
                 onPressed: widget.order.quantity > 1
                     ? () => setState(() => widget.order.quantity--)
+=======
+              _SmallValue('${widget.order.kilograms} kg'),
+              const SizedBox(width: 14),
+              _QuantityButton(
+                icon: Icons.remove,
+                onPressed: widget.order.kilograms > 1
+                    ? () => setState(() => widget.order.kilograms--)
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                     : null,
               ),
               const Padding(
@@ -358,7 +397,11 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               ),
               _QuantityButton(
                 icon: Icons.add,
+<<<<<<< HEAD
                 onPressed: () => setState(() => widget.order.quantity++),
+=======
+                onPressed: () => setState(() => widget.order.kilograms++),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
               ),
             ],
           ),
@@ -416,8 +459,13 @@ class OrderConfirmationScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
+<<<<<<< HEAD
             Text(
               order.serviceDisplayName,
+=======
+            const Text(
+              'Cuci Kering - Reguler',
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
               style: TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 14,
@@ -426,7 +474,11 @@ class OrderConfirmationScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+<<<<<<< HEAD
             _SummaryRow(order.quantitySummaryLabel, order.quantityLabel),
+=======
+            _SummaryRow('Berat Total', '${order.kilograms} kg'),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
             _SummaryRow('Total harga', 'Rp ${_formatCurrency(order.total)}'),
             const _SummaryRow('Ongkir', 'Free'),
             const SizedBox(height: 14),
@@ -723,8 +775,13 @@ class PaidOrderSummaryScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
+<<<<<<< HEAD
             Text(
               order.serviceDisplayName,
+=======
+            const Text(
+              'Cuci Kering - Reguler',
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
               style: TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 14,
@@ -733,7 +790,11 @@ class PaidOrderSummaryScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+<<<<<<< HEAD
             _SummaryRow(order.quantitySummaryLabel, order.quantityLabel),
+=======
+            _SummaryRow('Berat Total', '${order.kilograms} kg'),
+>>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
             _SummaryRow('Total harga', 'Rp ${_formatCurrency(order.total)}'),
             const _SummaryRow('Ongkir', 'Free'),
             const SizedBox(height: 14),
