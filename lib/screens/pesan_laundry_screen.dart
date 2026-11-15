@@ -13,13 +13,8 @@ class PesanLaundryScreen extends StatefulWidget {
 class _PesanLaundryScreenState extends State<PesanLaundryScreen> {
   static const _steps = [
     (
-<<<<<<< HEAD
       title: 'Pilih Layanan',
       description: 'Pilih layanan laundry sebelum menentukan kategori',
-=======
-      title: 'Pilih Layanan & Kategori',
-      description: 'Satuan, Cuci Komplit, Kiloan',
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
     ),
     (
       title: 'Detail & Jadwal Pesanan',
@@ -133,11 +128,7 @@ class _PesanLaundryScreenState extends State<PesanLaundryScreen> {
   void _openOrderStep(int index) {
     final order = LaundryOrderDraft();
     final Widget page = switch (index) {
-<<<<<<< HEAD
       0 => OrderServiceSelectionScreen(order: order),
-=======
-      0 => OrderCategoryScreen(order: order),
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
       1 => OrderDetailsScreen(order: order),
       2 => OrderConfirmationScreen(order: order),
       _ => OrderPaymentScreen(order: order),

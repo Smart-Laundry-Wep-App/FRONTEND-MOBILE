@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sca_smart_laundry/main.dart';
@@ -12,19 +11,11 @@ void main() {
   testWidgets('App renders SCA Smart Laundry login screen', (
     WidgetTester tester,
   ) async {
-=======
-import 'package:flutter_test/flutter_test.dart';
-import 'package:sca_smart_laundry/main.dart';
-
-void main() {
-  testWidgets('App renders SCA Smart Laundry login screen', (WidgetTester tester) async {
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
     await tester.pumpWidget(const SCASmartLaundryApp());
     expect(find.text('SCA Smart Laundry'), findsWidgets);
     expect(find.text('CUCI BERSIH, CEPAT & TEPAT WAKTU'), findsWidgets);
     expect(find.text('Masuk'), findsOneWidget);
   });
-<<<<<<< HEAD
 
   testWidgets('Order flow selects a service before its category', (
     WidgetTester tester,
@@ -183,6 +174,4 @@ void main() {
 
     expect(find.text('Ardhiva Riyo'), findsOneWidget);
   });
-=======
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 }

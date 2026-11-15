@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 
-=======
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 import '../constants/colors.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
 import 'jam_operasional_screen.dart';
-<<<<<<< HEAD
 import 'profile_screen.dart';
-=======
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 import 'riwayat_pesanan_screen.dart';
 
 class ServiceItemData {
@@ -86,13 +80,10 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const JamOperasionalScreen()),
       );
-<<<<<<< HEAD
     } else if (index == 4) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const ProfileScreen()),
       );
-=======
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
     } else {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -124,14 +115,10 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
           children: [
             // Top Header: Back Button + Title
             Padding(
-<<<<<<< HEAD
               padding: const EdgeInsets.symmetric(
                 horizontal: 20.0,
                 vertical: 14.0,
               ),
-=======
-              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 14.0),
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
               child: Row(
                 children: [
                   CircleBackButton(onTap: _onKembali),
@@ -160,7 +147,6 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
             Expanded(
               child: ListView.separated(
                 physics: const BouncingScrollPhysics(),
-<<<<<<< HEAD
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20.0,
                   vertical: 8.0,
@@ -168,11 +154,6 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
                 itemCount: _services.length + 1, // +1 for the Kembali button
                 separatorBuilder: (context, index) =>
                     const SizedBox(height: 10),
-=======
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                itemCount: _services.length + 1, // +1 for the Kembali button
-                separatorBuilder: (context, index) => const SizedBox(height: 10),
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
                 itemBuilder: (context, index) {
                   if (index == _services.length) {
                     // Tombol Kembali
@@ -278,7 +259,3 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
     );
   }
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50

@@ -1,19 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-<<<<<<< HEAD
 
-=======
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 import 'constants/colors.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/info_layanan_screen.dart';
 import 'screens/jam_operasional_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/promo_screen.dart';
-<<<<<<< HEAD
 import 'screens/profile_screen.dart';
-=======
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 import 'screens/register_screen.dart';
 import 'screens/riwayat_pesanan_screen.dart';
 
@@ -60,11 +54,7 @@ class ScreenPreviewShell extends StatefulWidget {
 }
 
 class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
-<<<<<<< HEAD
   int _activeScreenIndex = 0;
-=======
-  int _activeScreenIndex = 0; // 0: Login, 1: Register, 2: Dashboard, 3: Layanan, 4: Jam Kerja, 5: Promo
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 
   final List<Widget> _screens = const [
     LoginScreen(),
@@ -74,10 +64,7 @@ class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
     JamOperasionalScreen(),
     PromoScreen(),
     RiwayatPesananScreen(),
-<<<<<<< HEAD
     ProfileScreen(),
-=======
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
   ];
 
   final List<String> _screenTitles = const [
@@ -88,10 +75,7 @@ class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
     'Jam Kerja',
     'Promo',
     'Riwayat',
-<<<<<<< HEAD
     'Profil',
-=======
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
   ];
 
   @override
@@ -99,14 +83,7 @@ class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
     return Stack(
       children: [
         // Active Screen
-<<<<<<< HEAD
         IndexedStack(index: _activeScreenIndex, children: _screens),
-=======
-        IndexedStack(
-          index: _activeScreenIndex,
-          children: _screens,
-        ),
->>>>>>> 0033449ef0a637137ece06f11a25531538b96e50
 
         // Floating Quick Switcher Pill (Top, discreet & convenient)
         Positioned(
