@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import 'dashboard_screen.dart';
 import 'edit_profile_screen.dart';
@@ -29,6 +30,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _address = 'Jl. Bareng menuju IPK 4, Malang, Jawa Timur';
   String _language = 'Indonesia (INA)';
   Map<String, bool> _notificationSettings = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      final profile = await ApiService.instance.fetchProfile();
+      final notificationData = await ApiService.instance
+          .fetchNotificationSettings();
+      if (!mounted) return;
+      setState(() {
+        _name = profile['name'] as String? ?? _name;
+        _username = profile['username'] as String? ?? _username;
+        _email = profile['email'] as String? ?? _email;
+        _phone = profile['phone'] as String? ?? _phone;
+        _province = profile['province'] as String? ?? _province;
+        _city = profile['city'] as String? ?? _city;
+        _address = profile['address'] as String? ?? _address;
+        _language =
+            notificationData['language'] as String? ??
+            profile['language'] as String? ??
+            _language;
+        _notificationSettings = Map<String, bool>.from(
+          notificationData['notification_settings'] as Map? ?? const {},
+        );
+      });
+    } on ApiException catch (error) {
+      if (mounted) _showMessage(error.message);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
 
   void _onBottomNavTap(int index) {
     if (index == 4) return;
@@ -72,6 +113,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (profile != null && mounted) {
+      if (await ApiService.instance.hasSession) {
+        try {
+          await ApiService.instance.updateProfile({
+            'name': profile.name,
+            'username': profile.username,
+            'email': profile.email,
+            'phone': profile.phone,
+            'province': profile.province,
+            'city': profile.city,
+            'address': profile.address,
+          });
+        } on ApiException catch (error) {
+          if (mounted) _showMessage(error.message);
+          return;
+        }
+      }
+      if (!mounted) return;
       setState(() {
         _name = profile.name;
         _username = profile.username;
@@ -92,6 +150,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (language != null && mounted) {
+      if (await ApiService.instance.hasSession) {
+        try {
+          await ApiService.instance.updateProfile({'language': language});
+        } on ApiException catch (error) {
+          if (mounted) _showMessage(error.message);
+          return;
+        }
+      }
+      if (!mounted) return;
       setState(() => _language = language);
     }
   }
@@ -101,16 +168,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       MaterialPageRoute<void>(
         builder: (_) => NotificationSettingsScreen(
           initialSettings: Map<String, bool>.of(_notificationSettings),
-          onSettingsChanged: (settings) {
-            if (mounted) {
-              setState(
-                () => _notificationSettings = Map<String, bool>.of(settings),
-              );
-            }
-          },
+          onSettingsChanged: _saveNotificationSettings,
         ),
       ),
     );
+  }
+
+  Future<void> _saveNotificationSettings(Map<String, bool> settings) async {
+    if (await ApiService.instance.hasSession) {
+      try {
+        await ApiService.instance.saveNotificationSettings(settings);
+      } on ApiException catch (error) {
+        if (mounted) _showMessage(error.message);
+        return;
+      }
+    }
+    if (mounted) {
+      setState(() => _notificationSettings = Map<String, bool>.of(settings));
+    }
   }
 
   void _showLocationInfo() {
@@ -203,6 +278,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (shouldLogout == true && mounted) {
+      await ApiService.instance.signOut();
+      if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
         (route) => false,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'info_layanan_screen.dart';
@@ -22,6 +23,33 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final int _currentNavIndex = 2; // Center / Home Dashboard
+  String _customerName = 'Rendra';
+  Map<String, dynamic>? _activeOrder;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      final profile = await ApiService.instance.fetchProfile();
+      final order = await ApiService.instance.fetchActiveOrder();
+      if (!mounted) return;
+      setState(() {
+        _customerName = profile['name'] as String? ?? _customerName;
+        _activeOrder = order;
+      });
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    }
+  }
 
   void _onNavTap(int index) {
     if (index == 1) {
@@ -63,8 +91,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _navigateToGpsTracking() {
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const GpsTrackingScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => GpsTrackingScreen(
+          orderCode: _activeOrder?['orderId'] as String?,
+        ),
+      ),
+    );
   }
 
   void _navigateToInfoLayanan() {
@@ -91,13 +124,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
+              await ApiService.instance.signOut();
+              if (!mounted) return;
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
             },
-            child: const Text(
+            child: Text(
               'Keluar',
               style: TextStyle(fontFamily: 'Poppins', color: Colors.white),
             ),
@@ -201,7 +236,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                'Rendra',
+                                _customerName,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: (12.5 * scale).clamp(12.5, 15.0),
@@ -507,7 +542,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        'Order #SCA-2841',
+                                        _activeOrder == null
+                                            ? 'Belum ada pesanan aktif'
+                                            : 'Order ${_activeOrder!['orderId'] ?? ''}',
                                         style: TextStyle(
                                           fontFamily: 'Poppins',
                                           fontSize: (12.0 * scale).clamp(
@@ -529,8 +566,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             6,
                                           ),
                                         ),
-                                        child: const Text(
-                                          'Sedang Dicuci',
+                                        child: Text(
+                                          _activeOrder?['statusLabel'] ??
+                                              'Belum ada pesanan',
                                           style: TextStyle(
                                             fontFamily: 'Poppins',
                                             fontSize: 9.5,
@@ -543,7 +581,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    'Cuci Komplit • 3.5 Kg • Estimasi 16.00 WIB',
+                                    _activeOrder?['summaryText'] ??
+                                        'Pesanan terbaru akan tampil di sini.',
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
                                       fontSize: (10.5 * scale).clamp(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
@@ -28,7 +29,7 @@ class InfoLayananScreen extends StatefulWidget {
 }
 
 class _InfoLayananScreenState extends State<InfoLayananScreen> {
-  final List<ServiceItemData> _services = const [
+  List<ServiceItemData> _services = const [
     ServiceItemData(
       title: 'Cuci Kering',
       description: 'Pakaian bersih dan kering, siap digunakan.',
@@ -65,6 +66,41 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
       icon: PantsIcon(size: 28, color: AppColors.primary),
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadServices();
+  }
+
+  Future<void> _loadServices() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      final response = await ApiService.instance.fetchServices();
+      final rows = response['data'];
+      if (rows is! List || !mounted) return;
+      final services = rows.whereType<Map>().toList();
+      setState(() {
+        _services = List.generate(services.length, (index) {
+          final service = services[index];
+          final icon = index < _services.length
+              ? _services[index].icon
+              : const Icon(Icons.local_laundry_service_rounded);
+          return ServiceItemData(
+            title: '${service['name']}',
+            description: '${service['description']}',
+            icon: icon,
+          );
+        });
+      });
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    }
+  }
 
   void _onBottomNavTap(int index) {
     if (index == 1) return; // Already on Layanan

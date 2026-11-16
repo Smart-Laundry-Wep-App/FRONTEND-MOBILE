@@ -10,6 +10,7 @@ import 'screens/promo_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/riwayat_pesanan_screen.dart';
+import 'services/api_service.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,6 +56,22 @@ class ScreenPreviewShell extends StatefulWidget {
 
 class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
   int _activeScreenIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreSession();
+  }
+
+  Future<void> _restoreSession() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      await ApiService.instance.fetchProfile();
+      if (mounted) setState(() => _activeScreenIndex = 2);
+    } on ApiException catch (error) {
+      if (error.statusCode == 401) await ApiService.instance.signOut();
+    }
+  }
 
   final List<Widget> _screens = const [
     LoginScreen(),

@@ -4,16 +4,20 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
+import 'pesan_laundry_screen.dart';
 
 class PromoItemData {
+  final String code;
   final Widget icon;
   final String title;
   final String promoTitle;
   final String validity;
 
   const PromoItemData({
+    required this.code,
     required this.icon,
     required this.title,
     required this.promoTitle,
@@ -37,8 +41,9 @@ class _PromoScreenState extends State<PromoScreen>
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
 
-  final List<PromoItemData> _otherPromos = const [
+  List<PromoItemData> _otherPromos = const [
     PromoItemData(
+      code: 'MERDEKA',
       icon: Icon(
         Icons.confirmation_number_outlined,
         color: AppColors.primary,
@@ -49,6 +54,7 @@ class _PromoScreenState extends State<PromoScreen>
       validity: '17-18 Agustus',
     ),
     PromoItemData(
+      code: 'FREEONGKIR',
       icon: Icon(
         Icons.local_shipping_outlined,
         color: AppColors.primary,
@@ -59,6 +65,7 @@ class _PromoScreenState extends State<PromoScreen>
       validity: 'Syarat & Ketentuan Berlaku',
     ),
     PromoItemData(
+      code: 'DISKON15',
       icon: Icon(Icons.percent_rounded, color: AppColors.primary, size: 22),
       title: 'Potongan 15% S&K Berlaku.',
       promoTitle: 'Diskon 15%',
@@ -84,6 +91,43 @@ class _PromoScreenState extends State<PromoScreen>
       curve: Curves.easeInOut,
     ));
     _voucherController.addListener(_onVoucherChanged);
+    _loadPromos();
+  }
+
+  Future<void> _loadPromos() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      final appliedCode = await ApiService.instance.appliedPromoCode;
+      final response = await ApiService.instance.fetchPromos();
+      final rows = response['data'];
+      if (rows is! List || !mounted) return;
+      const icons = [
+        Icons.confirmation_number_outlined,
+        Icons.local_shipping_outlined,
+        Icons.percent_rounded,
+      ];
+      setState(() {
+        _appliedPromoCode = appliedCode;
+        _otherPromos = rows.take(3).whereType<Map>().toList().asMap().entries.map(
+          (entry) {
+            final promo = entry.value;
+            return PromoItemData(
+              code: '${promo['code']}',
+              icon: Icon(
+                icons[entry.key % icons.length],
+                color: AppColors.primary,
+                size: 22,
+              ),
+              title: '${promo['title']}',
+              promoTitle: '${promo['promoTitle']}',
+              validity: '${promo['validity']}',
+            );
+          },
+        ).toList();
+      });
+    } on ApiException catch (error) {
+      if (mounted) _showFeedback(error.message);
+    }
   }
 
   void _onVoucherChanged() {
@@ -120,6 +164,7 @@ class _PromoScreenState extends State<PromoScreen>
   }
 
   Future<void> _showPromoDetails({
+    required String code,
     required String badge,
     required String title,
     required String validity,
@@ -236,7 +281,27 @@ class _PromoScreenState extends State<PromoScreen>
     );
 
     if (claimed == true && mounted) {
-      await _showClaimSuccess();
+      await _claimPromo(code);
+    }
+  }
+
+  Future<void> _claimPromo(String code) async {
+    try {
+      await ApiService.instance.claimPromo(code);
+      if (mounted) await _showClaimSuccess();
+    } on ApiException catch (error) {
+      if (mounted) _showFeedback(error.message);
+    }
+  }
+
+  Future<void> _removeAppliedPromo() async {
+    try {
+      await ApiService.instance.setAppliedPromoCode(null);
+      if (!mounted) return;
+      setState(() => _appliedPromoCode = null);
+      _showFeedback('Kode promo dibatalkan.');
+    } on ApiException catch (error) {
+      if (mounted) _showFeedback(error.message);
     }
   }
 
@@ -255,21 +320,20 @@ class _PromoScreenState extends State<PromoScreen>
       _isSubmitting = true;
     });
 
-    // Loading animation on "Kirim" button to simulate validation
-    await Future.delayed(const Duration(milliseconds: 550));
-    if (!mounted) return;
-
-    setState(() {
-      _isSubmitting = false;
-    });
-
-    final used = await _showPromoSuccessDialog(promoCode: code);
-    if (used == true && mounted) {
-      setState(() {
-        _appliedPromoCode = code;
-      });
-      _voucherController.clear();
-      _showFeedback('Kode promo "$code" berhasil digunakan!');
+    try {
+      await ApiService.instance.validatePromo(code);
+      if (!mounted) return;
+      final used = await _showPromoSuccessDialog(promoCode: code);
+      if (used == true && mounted) {
+        await ApiService.instance.setAppliedPromoCode(code.toUpperCase());
+        setState(() => _appliedPromoCode = code.toUpperCase());
+        _voucherController.clear();
+        _showFeedback('Kode promo "$code" berhasil digunakan!');
+      }
+    } on ApiException catch (error) {
+      if (mounted) _showFeedback(error.message);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -516,6 +580,7 @@ class _PromoScreenState extends State<PromoScreen>
                               ),
                               ElevatedButton(
                                 onPressed: () => _showPromoDetails(
+                                  code: 'MABA20',
                                   badge: 'Promo Maba',
                                   title: 'Diskon 20%',
                                   validity: '1-31 Agustus',
@@ -746,12 +811,7 @@ class _PromoScreenState extends State<PromoScreen>
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _appliedPromoCode = null;
-                                });
-                                _showFeedback('Kode promo dibatalkan.');
-                              },
+                              onTap: _removeAppliedPromo,
                               child: const Icon(
                                 Icons.close_rounded,
                                 size: 14,
@@ -831,6 +891,7 @@ class _PromoScreenState extends State<PromoScreen>
                               ),
                               ElevatedButton(
                                 onPressed: () => _showPromoDetails(
+                                  code: promo.code,
                                   badge: promo.title.startsWith('Promo')
                                       ? 'Promo Kemerdekaan'
                                       : 'Promo Spesial',
@@ -874,8 +935,11 @@ class _PromoScreenState extends State<PromoScreen>
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
               child: ElevatedButton(
-                onPressed: () =>
-                    _showFeedback('Membuka form pemesanan laundry...'),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PesanLaundryScreen(),
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,

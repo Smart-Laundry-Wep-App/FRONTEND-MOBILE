@@ -1,9 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 
-class GpsTrackingScreen extends StatelessWidget {
-  const GpsTrackingScreen({super.key});
+class GpsTrackingScreen extends StatefulWidget {
+  const GpsTrackingScreen({super.key, this.orderCode});
+
+  final String? orderCode;
+
+  @override
+  State<GpsTrackingScreen> createState() => _GpsTrackingScreenState();
+}
+
+class _GpsTrackingScreenState extends State<GpsTrackingScreen> {
+  Map<String, dynamic>? _tracking;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTracking();
+  }
+
+  Future<void> _loadTracking() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      final order = widget.orderCode == null
+          ? await ApiService.instance.fetchActiveOrder()
+          : null;
+      final orderCode = widget.orderCode ?? order?['orderId'] as String?;
+      if (orderCode == null || orderCode.isEmpty) {
+        throw const ApiException('Tidak ada pesanan aktif untuk dilacak.');
+      }
+      final tracking = await ApiService.instance.fetchTracking(orderCode);
+      if (mounted) setState(() => _tracking = tracking);
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,8 +101,8 @@ class GpsTrackingScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Pesanan #12345',
+                    Text(
+                      'Pesanan ${_tracking?['order_code'] ?? '-'}',
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 20,
@@ -74,7 +111,7 @@ class GpsTrackingScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 3),
-                    const Row(
+                    Row(
                       children: [
                         Icon(
                           Icons.check_circle,
@@ -83,7 +120,8 @@ class GpsTrackingScreen extends StatelessWidget {
                         ),
                         SizedBox(width: 7),
                         Text(
-                          'Sedang dalam perjalanan',
+                          _tracking?['current_step'] ??
+                              'Menunggu data tracking',
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 14,
@@ -94,8 +132,8 @@ class GpsTrackingScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 13),
-                    const Text(
-                      'Estimasi tiba\n15 Menit lagi',
+                    Text(
+                      'Estimasi tiba\n${_tracking?['estimated_delivery'] ?? 'Belum tersedia'}',
                       style: TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 13,
@@ -127,9 +165,10 @@ class GpsTrackingScreen extends StatelessWidget {
                             color: AppColors.primary,
                           ),
                           const SizedBox(width: 10),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'Samuela',
+                              _tracking?['driver_name'] ??
+                                  'Kurir belum ditugaskan',
                               style: TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 13,
@@ -139,7 +178,23 @@ class GpsTrackingScreen extends StatelessWidget {
                             ),
                           ),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              final phone = _tracking?['driver_phone'];
+                              if (phone is String && phone.isNotEmpty) {
+                                final launched = await launchUrl(
+                                  Uri(scheme: 'tel', path: phone),
+                                );
+                                if (!launched && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Aplikasi telepon tidak tersedia.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
                             visualDensity: VisualDensity.compact,
                             icon: const Icon(
                               Icons.phone_in_talk_rounded,

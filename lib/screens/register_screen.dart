@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import 'dashboard_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -27,10 +29,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _onLanjut() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const DashboardScreen()),
-    );
+  Future<void> _onLanjut() async {
+    final email = _emailController.text.trim();
+    final name = _namaController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || name.isEmpty || password.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
+      _showMessage('Email, nama, password, dan konfirmasi password wajib diisi.');
+      return;
+    }
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+      _showMessage('Format email tidak valid.');
+      return;
+    }
+    if (password != _confirmPasswordController.text) {
+      _showMessage('Konfirmasi password tidak cocok dengan password.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      await ApiService.instance.register(
+        email: email,
+        name: name,
+        password: password,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+    } on ApiException catch (error) {
+      _showMessage(error.message);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _onLoginTap() {
@@ -327,7 +365,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   // Button: Lanjut
                   ElevatedButton(
-                    onPressed: _onLanjut,
+                    onPressed: _isSubmitting ? null : _onLanjut,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,

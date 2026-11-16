@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
@@ -16,6 +17,49 @@ class JamOperasionalScreen extends StatefulWidget {
 }
 
 class _JamOperasionalScreenState extends State<JamOperasionalScreen> {
+  String _days = 'Senin - Sabtu';
+  String _hours = '07.00 - 19.00';
+  String _note =
+      'Layanan tetap buka pada hari libur nasional\n(sedikit penyesuaian)';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOperatingHours();
+  }
+
+  Future<void> _loadOperatingHours() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      final data = await ApiService.instance.fetchOperatingHours();
+      final schedule = data['schedule_list'];
+      if (schedule is! List || schedule.isEmpty || !mounted) return;
+      final days = schedule
+          .whereType<Map>()
+          .where((day) => day['is_open'] == 1 || day['is_open'] == true)
+          .map((day) => '${day['day_name']}')
+          .toList();
+      final firstDay = schedule.first as Map;
+      final open = '${firstDay['open_time'] ?? '07.00'}'.replaceAll(':', '.');
+      final close = '${firstDay['close_time'] ?? '19.00'}'.replaceAll(':', '.');
+      setState(() {
+        _days = days.length == 7
+            ? 'Setiap Hari'
+            : days.isEmpty
+                ? 'Tutup'
+                : days.join(', ');
+        _hours = '$open - $close';
+        _note = '${firstDay['note'] ?? _note}'.replaceAll(' (', '\n(');
+      });
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    }
+  }
+
   void _onBottomNavTap(int index) {
     if (index == 3) return; // Already on Jam Kerja
     if (index == 0) {
@@ -159,9 +203,9 @@ class _JamOperasionalScreenState extends State<JamOperasionalScreen> {
                               ),
                             ),
                             child: Column(
-                              children: const [
+                              children: [
                                 Text(
-                                  'Senin - Sabtu',
+                                  _days,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 12.5,
@@ -171,7 +215,7 @@ class _JamOperasionalScreenState extends State<JamOperasionalScreen> {
                                 ),
                                 SizedBox(height: 4),
                                 Text(
-                                  '07.00 - 19.00',
+                                  _hours,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 19,
@@ -244,7 +288,7 @@ class _JamOperasionalScreenState extends State<JamOperasionalScreen> {
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
+                              children: [
                                 Text(
                                   'Catatan Khusus',
                                   style: TextStyle(
@@ -256,7 +300,7 @@ class _JamOperasionalScreenState extends State<JamOperasionalScreen> {
                                 ),
                                 SizedBox(height: 2),
                                 Text(
-                                  'Layanan tetap buka pada hari libur nasional\n(sedikit penyesuaian)',
+                                  _note,
                                   style: TextStyle(
                                     fontFamily: 'Poppins',
                                     fontSize: 10,

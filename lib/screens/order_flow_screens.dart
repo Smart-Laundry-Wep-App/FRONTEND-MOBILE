@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
 
@@ -8,18 +10,24 @@ class LaundryOrderDraft {
   String service = 'Cuci Kering';
   bool delivery = false;
   int quantity = 1;
-  DateTime pickupDate = DateTime(2026, 9, 3);
+  DateTime pickupDate = DateTime.now().add(const Duration(days: 1));
   String pickupTime = '06.00 - 10.00';
   String paymentMethod = 'QRIS';
+  int? serviceId;
+  String serviceUnit = 'kg';
+  int pricePerUnit = 10000;
+  String? orderId;
+  String? orderCode;
+  String? paymentUrl;
 
-  bool get isKiloService =>
-      service == 'Cuci Kering' || service == 'Cuci Express';
-  String get unit => isKiloService ? 'kg' : 'pcs';
+  bool get isKiloService => serviceUnit == 'kg';
+  String get unit => serviceUnit;
   String get quantityLabel => '$quantity $unit';
   String get quantitySummaryLabel =>
       isKiloService ? 'Berat Total' : 'Jumlah Item';
-  String get priceLabel => 'Rp. 10.000/$unit';
-  int get total => quantity * 10000;
+  String get priceLabel =>
+      'Rp. ${pricePerUnit.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match[1]}.')}/$unit';
+  int get total => quantity * pricePerUnit;
   String get serviceDisplayName =>
       service == 'Cuci Kering' ? '$service - Reguler' : service;
 }
@@ -36,7 +44,7 @@ class OrderServiceSelectionScreen extends StatefulWidget {
 
 class _OrderServiceSelectionScreenState
     extends State<OrderServiceSelectionScreen> {
-  static const _services = [
+  static const _defaultServices = [
     (
       name: 'Cuci Kering',
       description: 'Pakaian bersih dan kering, siap digunakan.',
@@ -54,6 +62,69 @@ class _OrderServiceSelectionScreenState
     (name: 'Cuci Sepatu', description: 'Sepatu bersih dengan perawatan tepat.'),
     (name: 'Wenter Pakaian', description: 'Segarkan warna pakaian favoritmu.'),
   ];
+
+  late List<
+    ({int? id, String name, String description, String unit, int price})
+  >
+  _services = _defaultServices
+      .map(
+        (service) => (
+          id: null,
+          name: service.name,
+          description: service.description,
+          unit: service.name == 'Cuci Kering' || service.name == 'Cuci Express'
+              ? 'kg'
+              : 'pcs',
+          price: 10000,
+        ),
+      )
+      .toList();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadServices();
+  }
+
+  Future<void> _loadServices() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      final response = await ApiService.instance.fetchServices();
+      final rows = response['data'];
+      if (rows is! List) return;
+      final services = rows.whereType<Map>().map((row) {
+        return (
+          id: int.tryParse('${row['id']}'),
+          name: '${row['name']}',
+          description: '${row['description']}',
+          unit: '${row['unit']}',
+          price: (double.tryParse('${row['price']}') ?? 10000).round(),
+        );
+      }).toList();
+      if (!mounted || services.isEmpty) return;
+      setState(() {
+        _services = services;
+        _applySelectedService();
+      });
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
+
+  void _applySelectedService() {
+    for (final service in _services) {
+      if (service.name == widget.order.service) {
+        widget.order
+          ..serviceId = service.id
+          ..serviceUnit = service.unit
+          ..pricePerUnit = service.price;
+        return;
+      }
+    }
+  }
 
   void _continue() {
     Navigator.of(context).push(
@@ -92,7 +163,8 @@ class _OrderServiceSelectionScreenState
 
   Widget _buildServiceCard(
     int index,
-    ({String name, String description}) service,
+    ({int? id, String name, String description, String unit, int price})
+    service,
   ) {
     final selected = widget.order.service == service.name;
     final foregroundColor = selected ? Colors.white : AppColors.primary;
@@ -102,7 +174,13 @@ class _OrderServiceSelectionScreenState
       color: selected ? AppColors.primary : Colors.white,
       borderRadius: BorderRadius.circular(9),
       child: InkWell(
-        onTap: () => setState(() => widget.order.service = service.name),
+        onTap: () => setState(() {
+          widget.order
+            ..service = service.name
+            ..serviceId = service.id
+            ..serviceUnit = service.unit
+            ..pricePerUnit = service.price;
+        }),
         borderRadius: BorderRadius.circular(9),
         child: Container(
           height: 56,
@@ -387,17 +465,50 @@ class OrderConfirmationScreen extends StatelessWidget {
 
   final LaundryOrderDraft order;
 
+  Future<void> _createOrderAndContinue(BuildContext context) async {
+    try {
+      if (!await ApiService.instance.hasSession) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Silakan masuk untuk membuat pesanan.')),
+        );
+        return;
+      }
+      if (order.orderId == null) {
+        final created = await ApiService.instance.createOrder({
+          'service_id': order.serviceId,
+          'service_name': order.service,
+          'delivery': order.delivery,
+          'category_type': order.delivery ? 'delivery' : 'pickup_outlet',
+          'quantity': order.quantity,
+          'pickup_date': order.pickupDate.toIso8601String().split('T').first,
+          'pickup_time': order.pickupTime,
+          'payment_method': order.paymentMethod,
+          'promo_code': await ApiService.instance.appliedPromoCode,
+        });
+        order
+          ..orderId = '${created['id']}'
+          ..orderCode = '${created['order_code']}';
+      }
+      if (!context.mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => OrderPaymentScreen(order: order)),
+      );
+    } on ApiException catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return _OrderPage(
       title: 'Konfirmasi Pesanan',
       bottom: _ContinueButton(
         label: 'Bayar Sekarang',
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => OrderPaymentScreen(order: order)),
-          );
-        },
+        onPressed: () => _createOrderAndContinue(context),
       ),
       child: Container(
         width: double.infinity,
@@ -466,33 +577,135 @@ class OrderPaymentScreen extends StatefulWidget {
 
 class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
   static const _wallets = ['Gopay', 'Dana', 'ShopeePay', 'OVO'];
+  bool _isBusy = false;
 
-  void _continue() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => PaymentSuccessScreen(order: widget.order),
-      ),
-    );
+  Future<void> _ensureOrder() async {
+    if (widget.order.orderId != null) return;
+    final created = await ApiService.instance.createOrder({
+      'service_id': widget.order.serviceId,
+      'service_name': widget.order.service,
+      'delivery': widget.order.delivery,
+      'category_type': widget.order.delivery ? 'delivery' : 'pickup_outlet',
+      'quantity': widget.order.quantity,
+      'pickup_date': widget.order.pickupDate.toIso8601String().split('T').first,
+      'pickup_time': widget.order.pickupTime,
+      'payment_method': widget.order.paymentMethod,
+      'promo_code': await ApiService.instance.appliedPromoCode,
+    });
+    widget.order
+      ..orderId = '${created['id']}'
+      ..orderCode = '${created['order_code']}';
+  }
+
+  Future<void> _continue() async {
+    if (_isBusy) return;
+    setState(() => _isBusy = true);
+    try {
+      if (!await ApiService.instance.hasSession) {
+        throw const ApiException('Silakan masuk untuk membayar pesanan.');
+      }
+      await _ensureOrder();
+      final status = await ApiService.instance.fetchPaymentStatus(
+        widget.order.orderId!,
+      );
+      if (status['payment_status'] == 'paid') {
+        if (!mounted) return;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PaymentSuccessScreen(order: widget.order),
+          ),
+        );
+        return;
+      }
+
+      final payment = await ApiService.instance.createPayment(
+        widget.order.orderId!,
+        widget.order.paymentMethod.toUpperCase(),
+      );
+      final url = payment['payment_url'] as String?;
+      if (url == null || url.isEmpty) {
+        throw const ApiException(
+          'Gateway tidak mengembalikan tautan pembayaran.',
+        );
+      }
+      widget.order.paymentUrl = url;
+      final opened = await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!mounted) return;
+      if (!opened) {
+        throw const ApiException('Tautan pembayaran tidak dapat dibuka.');
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Selesaikan pembayaran, lalu periksa status pembayaran.',
+          ),
+        ),
+      );
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
+  }
+
+  Future<void> _refreshPaymentStatus() async {
+    if (_isBusy) return;
+    setState(() => _isBusy = true);
+    try {
+      if (widget.order.orderId == null) {
+        throw const ApiException('Pesanan belum dibuat.');
+      }
+      final status = await ApiService.instance.fetchPaymentStatus(
+        widget.order.orderId!,
+      );
+      if (!mounted) return;
+      if (status['payment_status'] == 'paid') {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PaymentSuccessScreen(order: widget.order),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Pembayaran belum dikonfirmasi gateway.'),
+          ),
+        );
+      }
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _isBusy = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return _OrderPage(
       title: 'PEMBAYARAN',
-      bottom: _ContinueButton(label: 'Lanjut', onPressed: _continue),
+      bottom: _ContinueButton(
+        label: 'Lanjut',
+        onPressed: _isBusy
+            ? null
+            : () {
+                _continue();
+              },
+      ),
       child: Column(
         children: [
           SizedBox(
             width: 210,
             child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Status pembayaran diperbarui.'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
+              onPressed: _isBusy ? null : _refreshPaymentStatus,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
@@ -534,14 +747,7 @@ class _OrderPaymentScreenState extends State<OrderPaymentScreen> {
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('QR pembayaran akan tersedia saat checkout.'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
+            onPressed: _isBusy ? null : _continue,
             icon: const Icon(Icons.download_rounded),
             label: const Text('Unduh QR Code'),
           ),
@@ -942,7 +1148,7 @@ class _ContinueButton extends StatelessWidget {
   const _ContinueButton({required this.label, required this.onPressed});
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {

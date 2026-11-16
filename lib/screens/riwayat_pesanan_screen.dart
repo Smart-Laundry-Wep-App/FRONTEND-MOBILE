@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
@@ -36,7 +37,7 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
 
   final List<String> _filters = const ['Semua', 'Berlangsung', 'Selesai'];
 
-  final List<RiwayatOrderItem> _orders = const [
+  List<RiwayatOrderItem> _orders = const [
     RiwayatOrderItem(
       orderId: '#SL0126',
       serviceName: 'Cuci Kering - 3kg',
@@ -68,6 +69,36 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
       status: 'Selesai',
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      final rows = await ApiService.instance.fetchOrders(month: _selectedMonth);
+      if (!mounted) return;
+      setState(() {
+        _orders = rows.map((row) {
+          return RiwayatOrderItem(
+            orderId: '${row['order_code'] ?? row['orderId'] ?? ''}',
+            serviceName: '${row['serviceName'] ?? row['service_name'] ?? ''}',
+            date: '${row['date'] ?? row['formatted_date'] ?? row['pickup_date'] ?? ''}',
+            status: '${row['status'] ?? 'Berlangsung'}',
+          );
+        }).toList();
+      });
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    }
+  }
 
   List<RiwayatOrderItem> get _filteredOrders {
     if (_selectedFilterIndex == 1) {
@@ -164,6 +195,7 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
                       setState(() {
                         _selectedMonth = m;
                       });
+                      _loadOrders();
                       Navigator.pop(ctx);
                     },
                   );
@@ -386,7 +418,11 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
         if (isBerlangsung) {
           Navigator.of(
             context,
-          ).push(MaterialPageRoute(builder: (_) => const GpsTrackingScreen()));
+          ).push(
+            MaterialPageRoute(
+              builder: (_) => GpsTrackingScreen(orderCode: order.orderId),
+            ),
+          );
         } else {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
 import 'register_screen.dart';
@@ -15,6 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isSubmitting = false;
+  static bool _googleInitialized = false;
 
   @override
   void dispose() {
@@ -23,10 +29,111 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _onLogin() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const DashboardScreen()),
-    );
+  Future<void> _onLogin() async {
+    final identifier = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (identifier.isEmpty || password.isEmpty) {
+      _showMessage('Email/username dan password wajib diisi.');
+      return;
+    }
+
+    await _runAuth(() => ApiService.instance.login(
+      identifier: identifier,
+      password: password,
+    ));
+  }
+
+  Future<void> _onSocialLogin(String provider) async {
+    await _runAuth(() async {
+      if (provider == 'google') {
+        final clientId = const String.fromEnvironment('GOOGLE_CLIENT_ID');
+        if (clientId.isEmpty) {
+          throw const ApiException(
+            'Login Google belum dikonfigurasi. Isi GOOGLE_CLIENT_ID pada konfigurasi aplikasi.',
+          );
+        }
+        if (!_googleInitialized) {
+          await GoogleSignIn.instance.initialize(
+            clientId: clientId.isEmpty ? null : clientId,
+            serverClientId: clientId.isEmpty ? null : clientId,
+          );
+          _googleInitialized = true;
+        }
+        final account = await GoogleSignIn.instance.authenticate();
+        final idToken = account.authentication.idToken;
+        if (idToken == null || idToken.isEmpty) {
+          throw const ApiException('Token Google tidak tersedia. Periksa konfigurasi OAuth aplikasi.');
+        }
+        return ApiService.instance.signInWithGoogle(idToken);
+      }
+
+      final facebookAppId = const String.fromEnvironment('FACEBOOK_APP_ID');
+      if (facebookAppId.isEmpty) {
+        throw const ApiException(
+          'Login Facebook belum dikonfigurasi. Isi FACEBOOK_APP_ID dan konfigurasi aplikasi Facebook.',
+        );
+      }
+      if (kIsWeb) {
+        await FacebookAuth.instance.webAndDesktopInitialize(
+          appId: facebookAppId,
+          cookie: true,
+          xfbml: false,
+          version: 'v21.0',
+        );
+      }
+      final result = await FacebookAuth.instance.login(
+        permissions: const ['email', 'public_profile'],
+        loginTracking: LoginTracking.enabled,
+      );
+      if (result.status != LoginStatus.success) {
+        throw ApiException(result.message ?? 'Login Facebook dibatalkan atau gagal.');
+      }
+      final accessToken = result.accessToken?.tokenString;
+      if (accessToken == null || accessToken.isEmpty) {
+        throw const ApiException('Token Facebook tidak tersedia. Periksa konfigurasi aplikasi Facebook.');
+      }
+      return ApiService.instance.signInWithFacebook(accessToken);
+    });
+  }
+
+  Future<void> _runAuth(
+    Future<Map<String, dynamic>> Function() authenticate,
+  ) async {
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await authenticate();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+    } on ApiException catch (error) {
+      _showMessage(error.message);
+    } catch (error) {
+      _showMessage('Login gagal: $error');
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _onForgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      _showMessage('Masukkan email terlebih dahulu.');
+      return;
+    }
+    try {
+      await ApiService.instance.requestPasswordReset(email);
+      if (mounted) _showMessage('Instruksi reset password berhasil dikirim.');
+    } on ApiException catch (error) {
+      _showMessage(error.message);
+    }
   }
 
   void _onRegisterTap() {
@@ -232,14 +339,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Fitur reset password belum tersedia.'),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      },
+                      onTap: _onForgotPassword,
                       child: const Text(
                         'Lupa Password?',
                         style: TextStyle(
@@ -255,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Button: Masuk
                   ElevatedButton(
-                    onPressed: _onLogin,
+                    onPressed: _isSubmitting ? null : _onLogin,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -331,7 +431,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(8),
-                            onTap: _onLogin,
+                            onTap: _isSubmitting
+                                ? null
+                                : () => _onSocialLogin('google'),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
@@ -374,7 +476,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: InkWell(
                             borderRadius: BorderRadius.circular(8),
-                            onTap: _onLogin,
+                            onTap: _isSubmitting
+                                ? null
+                                : () => _onSocialLogin('facebook'),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: const [
