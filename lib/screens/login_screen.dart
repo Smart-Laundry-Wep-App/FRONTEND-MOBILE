@@ -20,7 +20,20 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isSubmitting = false;
+  String? _emailError;
+  String? _passwordError;
   static bool _googleInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(() {
+      if (_emailError != null) setState(() => _emailError = null);
+    });
+    _passwordController.addListener(() {
+      if (_passwordError != null) setState(() => _passwordError = null);
+    });
+  }
 
   @override
   void dispose() {
@@ -32,10 +45,34 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _onLogin() async {
     final identifier = _emailController.text.trim();
     final password = _passwordController.text;
-    if (identifier.isEmpty || password.isEmpty) {
-      _showMessage('Email/username dan password wajib diisi.');
+
+    String? emailErr;
+    String? passwordErr;
+
+    if (identifier.isEmpty) {
+      emailErr = 'Email atau username wajib diisi.';
+    } else if (identifier.length < 3) {
+      emailErr = 'Email atau username minimal 3 karakter.';
+    }
+
+    if (password.isEmpty) {
+      passwordErr = 'Password wajib diisi.';
+    } else if (password.length < 6) {
+      passwordErr = 'Password minimal 6 karakter.';
+    }
+
+    if (emailErr != null || passwordErr != null) {
+      setState(() {
+        _emailError = emailErr;
+        _passwordError = passwordErr;
+      });
       return;
     }
+
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+    });
 
     await _runAuth(() => ApiService.instance.login(
       identifier: identifier,
@@ -108,6 +145,17 @@ class _LoginScreenState extends State<LoginScreen> {
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     } on ApiException catch (error) {
+      setState(() {
+        if (error.field == 'identifier' ||
+            error.message.toLowerCase().contains('email') ||
+            error.message.toLowerCase().contains('username') ||
+            error.message.toLowerCase().contains('ditemukan')) {
+          _emailError = error.message;
+        } else if (error.field == 'password' ||
+            error.message.toLowerCase().contains('password')) {
+          _passwordError = error.message;
+        }
+      });
       _showMessage(error.message);
     } catch (error) {
       _showMessage('Login gagal: $error');
@@ -250,6 +298,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         horizontal: 14,
                         vertical: 12,
                       ),
+                      errorText: _emailError,
+                      errorMaxLines: 2,
+                      errorStyle: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w500,
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
@@ -261,6 +317,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
                           color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
+                          width: 1.2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
                           width: 1.5,
                         ),
                       ),
@@ -303,6 +373,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         horizontal: 14,
                         vertical: 12,
                       ),
+                      errorText: _passwordError,
+                      errorMaxLines: 2,
+                      errorStyle: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w500,
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
@@ -328,6 +406,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
                           color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
+                          width: 1.2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
                           width: 1.5,
                         ),
                       ),

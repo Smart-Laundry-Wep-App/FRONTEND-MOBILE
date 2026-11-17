@@ -5,10 +5,17 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiException implements Exception {
-  const ApiException(this.message, {this.statusCode});
+  const ApiException(
+    this.message, {
+    this.statusCode,
+    this.field,
+    this.errors,
+  });
 
   final String message;
   final int? statusCode;
+  final String? field;
+  final Map<String, dynamic>? errors;
 
   @override
   String toString() => message;
@@ -320,11 +327,18 @@ class ApiService {
       if (response.statusCode < 200 ||
           response.statusCode >= 300 ||
           decoded['success'] == false) {
+        final message = decoded['message'] is String
+            ? decoded['message'] as String
+            : 'Permintaan gagal (${response.statusCode}).';
+        final field = decoded['field'] is String ? decoded['field'] as String : null;
+        final errors = decoded['errors'] is Map
+            ? Map<String, dynamic>.from(decoded['errors'] as Map)
+            : null;
         throw ApiException(
-          decoded['message'] is String
-              ? decoded['message'] as String
-              : 'Permintaan gagal (${response.statusCode}).',
+          message,
           statusCode: response.statusCode,
+          field: field,
+          errors: errors,
         );
       }
       return decoded;

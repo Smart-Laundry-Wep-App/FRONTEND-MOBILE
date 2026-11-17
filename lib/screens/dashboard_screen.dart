@@ -67,22 +67,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else if (index == 0) {
       Navigator.of(
         context,
-      ).push(MaterialPageRoute(builder: (_) => const RiwayatPesananScreen()));
+      ).push(MaterialPageRoute(builder: (_) => const RiwayatPesananScreen()))
+          .then((_) => _loadDashboardData());
     } else if (index == 4) {
       Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const ProfileScreen()));
+          .push(MaterialPageRoute(builder: (_) => const ProfileScreen()))
+          .then((_) => _loadDashboardData());
     }
   }
 
   void _navigateToPromo() {
     // 3. Promo ke Page Promo
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const PromoScreen()));
+        .push(MaterialPageRoute(builder: (_) => const PromoScreen()))
+        .then((_) => _loadDashboardData());
   }
 
   void _navigateToPesanan() {
     Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => const PesanLaundryScreen()));
+        .push(MaterialPageRoute(builder: (_) => const PesanLaundryScreen()))
+        .then((_) => _loadDashboardData());
   }
 
   void _navigateToPusatBantuan() {
@@ -94,10 +98,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => GpsTrackingScreen(
-          orderCode: _activeOrder?['orderId'] as String?,
+          orderCode: (_activeOrder?['orderCode'] ?? _activeOrder?['orderId']) as String?,
         ),
       ),
-    );
+    ).then((_) => _loadDashboardData());
   }
 
   void _navigateToInfoLayanan() {
@@ -282,13 +286,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             // Scrollable Content
             Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 6),
+              child: RefreshIndicator(
+                onRefresh: _loadDashboardData,
+                color: AppColors.primary,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                    parent: BouncingScrollPhysics(),
+                  ),
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 6),
 
                     // Hero Banner Card
                     Container(
@@ -465,12 +474,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     SizedBox(height: (screenHeight * 0.024).clamp(18.0, 26.0)),
 
-                    // Section: Pesanan Aktif / Status Terkini
+                    // Section: Pesanan Terbaru / Status Terkini
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Pesanan Aktif',
+                          'Pesanan Terbaru',
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: (16.0 * scale).clamp(16.0, 19.0),
@@ -479,9 +488,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         GestureDetector(
-                          onTap: _navigateToGpsTracking,
+                          onTap: _activeOrder == null
+                              ? _navigateToPesanan
+                              : _navigateToGpsTracking,
                           child: Text(
-                            'Lacak Status',
+                            _activeOrder == null ? 'Pesan Sekarang' : 'Lacak Status',
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: (12.0 * scale).clamp(12.0, 14.0),
@@ -494,7 +505,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 12),
                     GestureDetector(
-                      onTap: _navigateToGpsTracking,
+                      onTap: _activeOrder == null
+                          ? _navigateToPesanan
+                          : _navigateToGpsTracking,
                       child: Container(
                         width: double.infinity,
                         padding: EdgeInsets.all(
@@ -524,9 +537,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 color: AppColors.inputFill,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Center(
+                              child: Center(
                                 child: Icon(
-                                  Icons.local_laundry_service_rounded,
+                                  _activeOrder == null
+                                      ? Icons.add_shopping_cart_rounded
+                                      : Icons.local_laundry_service_rounded,
                                   color: AppColors.primary,
                                   size: 26,
                                 ),
@@ -541,48 +556,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        _activeOrder == null
-                                            ? 'Belum ada pesanan aktif'
-                                            : 'Order ${_activeOrder!['orderId'] ?? ''}',
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: (12.0 * scale).clamp(
-                                            12.0,
-                                            14.0,
-                                          ),
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.textDark,
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFE8F9EE),
-                                          borderRadius: BorderRadius.circular(
-                                            6,
-                                          ),
-                                        ),
+                                      Expanded(
                                         child: Text(
-                                          _activeOrder?['statusLabel'] ??
-                                              'Belum ada pesanan',
+                                          _activeOrder == null
+                                              ? 'Belum ada pesanan'
+                                              : 'Order ${_activeOrder!['orderCode'] ?? _activeOrder!['orderId'] ?? ''}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                             fontFamily: 'Poppins',
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF0F7638),
+                                            fontSize: (12.0 * scale).clamp(
+                                              12.0,
+                                              14.0,
+                                            ),
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textDark,
                                           ),
                                         ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      _buildStatusBadge(
+                                        _activeOrder?['statusLabel'] as String?,
+                                        _activeOrder?['orderStatus'] as String?,
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     _activeOrder?['summaryText'] ??
-                                        'Pesanan terbaru akan tampil di sini.',
+                                        'Ketuk di sini untuk mulai membuat pesanan laundry.',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontFamily: 'Poppins',
                                       fontSize: (10.5 * scale).clamp(
@@ -743,9 +747,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+          ),
 
-            // Bottom Navigation Bar
-            AppBottomNavBar(
+          // Bottom Navigation Bar
+          AppBottomNavBar(
               currentIndex: _currentNavIndex,
               isBeranda: true,
               onItemSelected: _onNavTap,
@@ -838,6 +843,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String? label, String? statusKey) {
+    if (label == null || label.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F0F0),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Text(
+          'Belum ada pesanan',
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 9.5,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF757575),
+          ),
+        ),
+      );
+    }
+
+    final (bgColor, textColor) = switch (statusKey) {
+      'selesai' => (const Color(0xFFE8F9EE), const Color(0xFF0F7638)),
+      'menunggu_penjemputan' => (
+        const Color(0xFFFFF4E5),
+        const Color(0xFFB76E00),
+      ),
+      'dibatalkan' => (const Color(0xFFFFEBEE), const Color(0xFFD32F2F)),
+      _ => (const Color(0xFFE9EAFE), AppColors.primary),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'Poppins',
+          fontSize: 9.5,
+          fontWeight: FontWeight.w600,
+          color: textColor,
         ),
       ),
     );

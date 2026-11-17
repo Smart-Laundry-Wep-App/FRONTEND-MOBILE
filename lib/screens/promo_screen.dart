@@ -37,6 +37,7 @@ class _PromoScreenState extends State<PromoScreen>
   final _voucherController = TextEditingController();
   int _activeCarouselIndex = 0;
   String? _appliedPromoCode;
+  String? _voucherError;
   bool _isSubmitting = false;
   late final AnimationController _shakeController;
   late final Animation<double> _shakeAnimation;
@@ -131,7 +132,11 @@ class _PromoScreenState extends State<PromoScreen>
   }
 
   void _onVoucherChanged() {
-    if (mounted) setState(() {});
+    if (_voucherError != null) {
+      setState(() => _voucherError = null);
+    } else if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -310,14 +315,18 @@ class _PromoScreenState extends State<PromoScreen>
 
     final code = _voucherController.text.trim();
     if (code.isEmpty) {
+      setState(() {
+        _voucherError = 'Silahkan masukkan kode promo terlebih dahulu.';
+      });
       _shakeController.forward(from: 0.0);
-      _showFeedback('Silahkan masukkan kode promo terlebih dahulu.');
+      _showFeedback(_voucherError!);
       return;
     }
 
     FocusScope.of(context).unfocus();
     setState(() {
       _isSubmitting = true;
+      _voucherError = null;
     });
 
     try {
@@ -326,12 +335,21 @@ class _PromoScreenState extends State<PromoScreen>
       final used = await _showPromoSuccessDialog(promoCode: code);
       if (used == true && mounted) {
         await ApiService.instance.setAppliedPromoCode(code.toUpperCase());
-        setState(() => _appliedPromoCode = code.toUpperCase());
+        setState(() {
+          _appliedPromoCode = code.toUpperCase();
+          _voucherError = null;
+        });
         _voucherController.clear();
         _showFeedback('Kode promo "$code" berhasil digunakan!');
       }
     } on ApiException catch (error) {
-      if (mounted) _showFeedback(error.message);
+      if (mounted) {
+        setState(() {
+          _voucherError = error.message;
+        });
+        _shakeController.forward(from: 0.0);
+        _showFeedback(error.message);
+      }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -659,12 +677,12 @@ class _PromoScreenState extends State<PromoScreen>
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: _shakeController.isAnimating
-                                    ? Colors.red.shade300
+                                color: _voucherError != null || _shakeController.isAnimating
+                                    ? Colors.redAccent
                                     : _voucherController.text.trim().isNotEmpty
                                         ? AppColors.primary
                                         : AppColors.cardBorder,
-                                width: _voucherController.text.trim().isNotEmpty
+                                width: _voucherError != null || _voucherController.text.trim().isNotEmpty
                                     ? 1.6
                                     : 1.2,
                               ),
@@ -776,6 +794,31 @@ class _PromoScreenState extends State<PromoScreen>
                         );
                       },
                     ),
+                    if (_voucherError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6, left: 4),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              size: 14,
+                              color: Colors.redAccent,
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                _voucherError!,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 11,
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     if (_appliedPromoCode != null) ...[
                       const SizedBox(height: 8),
                       Container(

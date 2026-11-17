@@ -317,15 +317,24 @@ class OrderDetailsScreen extends StatefulWidget {
 }
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  String? _validationError;
+
   Future<void> _selectDate() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
     final date = await showDatePicker(
       context: context,
-      initialDate: widget.order.pickupDate,
-      firstDate: DateTime(2026),
-      lastDate: DateTime(2030),
+      initialDate: widget.order.pickupDate.isBefore(today)
+          ? today
+          : widget.order.pickupDate,
+      firstDate: today,
+      lastDate: today.add(const Duration(days: 365)),
     );
     if (date != null) {
-      setState(() => widget.order.pickupDate = date);
+      setState(() {
+        widget.order.pickupDate = date;
+        _validationError = null;
+      });
     }
   }
 
@@ -365,6 +374,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       setState(() {
         widget.order.pickupTime =
             '${_formatTime(time.hour)} - ${_formatTime(endHour)}';
+        _validationError = null;
       });
     }
   }
@@ -372,6 +382,24 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   String _formatTime(int hour) => '${hour.toString().padLeft(2, '0')}.00';
 
   void _continue() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final pickupDay = DateTime(
+      widget.order.pickupDate.year,
+      widget.order.pickupDate.month,
+      widget.order.pickupDate.day,
+    );
+
+    if (widget.order.quantity <= 0) {
+      setState(() => _validationError = 'Jumlah item/berat harus lebih dari 0.');
+      return;
+    }
+    if (pickupDay.isBefore(today)) {
+      setState(() => _validationError = 'Tanggal pengambilan tidak boleh di masa lalu.');
+      return;
+    }
+
+    setState(() => _validationError = null);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => OrderConfirmationScreen(order: widget.order),
@@ -387,6 +415,35 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_validationError != null)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFEBEE),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.redAccent.shade100),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      color: Colors.redAccent, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _validationError!,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           const _SectionTitle('Detail Layanan'),
           const SizedBox(height: 14),
           Container(
@@ -460,45 +517,75 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   }
 }
 
-class OrderConfirmationScreen extends StatelessWidget {
+class OrderConfirmationScreen extends StatefulWidget {
   const OrderConfirmationScreen({super.key, required this.order});
 
   final LaundryOrderDraft order;
 
-  Future<void> _createOrderAndContinue(BuildContext context) async {
+  @override
+  State<OrderConfirmationScreen> createState() =>
+      _OrderConfirmationScreenState();
+}
+
+class _OrderConfirmationScreenState extends State<OrderConfirmationScreen> {
+  String? _errorMessage;
+  bool _isCreatingOrder = false;
+
+  Future<void> _createOrderAndContinue() async {
+    if (_isCreatingOrder) return;
+    setState(() {
+      _isCreatingOrder = true;
+      _errorMessage = null;
+    });
+
     try {
       if (!await ApiService.instance.hasSession) {
-        if (!context.mounted) return;
+        if (!mounted) return;
+        const msg = 'Silakan masuk untuk membuat pesanan.';
+        setState(() => _errorMessage = msg);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Silakan masuk untuk membuat pesanan.')),
+          const SnackBar(content: Text(msg)),
         );
         return;
       }
-      if (order.orderId == null) {
+      if (widget.order.orderId == null) {
         final created = await ApiService.instance.createOrder({
-          'service_id': order.serviceId,
-          'service_name': order.service,
-          'delivery': order.delivery,
-          'category_type': order.delivery ? 'delivery' : 'pickup_outlet',
-          'quantity': order.quantity,
-          'pickup_date': order.pickupDate.toIso8601String().split('T').first,
-          'pickup_time': order.pickupTime,
-          'payment_method': order.paymentMethod,
+          'service_id': widget.order.serviceId,
+          'service_name': widget.order.service,
+          'delivery': widget.order.delivery,
+          'category_type': widget.order.delivery ? 'delivery' : 'pickup_outlet',
+          'quantity': widget.order.quantity,
+          'pickup_date':
+              widget.order.pickupDate.toIso8601String().split('T').first,
+          'pickup_time': widget.order.pickupTime,
+          'payment_method': widget.order.paymentMethod,
           'promo_code': await ApiService.instance.appliedPromoCode,
         });
-        order
+        widget.order
           ..orderId = '${created['id']}'
           ..orderCode = '${created['order_code']}';
       }
-      if (!context.mounted) return;
+      if (!mounted) return;
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => OrderPaymentScreen(order: order)),
+        MaterialPageRoute(
+          builder: (_) => OrderPaymentScreen(order: widget.order),
+        ),
       );
     } on ApiException catch (error) {
-      if (context.mounted) {
+      if (mounted) {
+        setState(() => _errorMessage = error.message);
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(error.message)));
       }
+    } catch (error) {
+      if (mounted) {
+        final msg = 'Terjadi kesalahan: $error';
+        setState(() => _errorMessage = msg);
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
+      }
+    } finally {
+      if (mounted) setState(() => _isCreatingOrder = false);
     }
   }
 
@@ -507,8 +594,8 @@ class OrderConfirmationScreen extends StatelessWidget {
     return _OrderPage(
       title: 'Konfirmasi Pesanan',
       bottom: _ContinueButton(
-        label: 'Bayar Sekarang',
-        onPressed: () => _createOrderAndContinue(context),
+        label: _isCreatingOrder ? 'Memproses...' : 'Bayar Sekarang',
+        onPressed: _isCreatingOrder ? null : _createOrderAndContinue,
       ),
       child: Container(
         width: double.infinity,
@@ -517,6 +604,35 @@ class OrderConfirmationScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (_errorMessage != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEBEE),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.redAccent.shade100),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline_rounded,
+                        color: Colors.redAccent, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const Text(
               'Ringkasan Pesanan',
               style: TextStyle(
@@ -528,8 +644,8 @@ class OrderConfirmationScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              order.serviceDisplayName,
-              style: TextStyle(
+              widget.order.serviceDisplayName,
+              style: const TextStyle(
                 fontFamily: 'Poppins',
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -537,8 +653,14 @@ class OrderConfirmationScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _SummaryRow(order.quantitySummaryLabel, order.quantityLabel),
-            _SummaryRow('Total harga', 'Rp ${_formatCurrency(order.total)}'),
+            _SummaryRow(
+              widget.order.quantitySummaryLabel,
+              widget.order.quantityLabel,
+            ),
+            _SummaryRow(
+              'Total harga',
+              'Rp ${_formatCurrency(widget.order.total)}',
+            ),
             const _SummaryRow('Ongkir', 'Free'),
             const SizedBox(height: 14),
             const Text(
@@ -552,11 +674,14 @@ class OrderConfirmationScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             _SummaryRow(
-              _dateLabel(order.pickupDate),
-              '${order.pickupTime} WIB',
+              _dateLabel(widget.order.pickupDate),
+              '${widget.order.pickupTime} WIB',
             ),
             const SizedBox(height: 20),
-            _outlinedSummaryRow('Total', 'Rp ${_formatCurrency(order.total)}'),
+            _outlinedSummaryRow(
+              'Total',
+              'Rp ${_formatCurrency(widget.order.total)}',
+            ),
             const SizedBox(height: 18),
             _outlinedSummaryRow('Bayar', ''),
           ],

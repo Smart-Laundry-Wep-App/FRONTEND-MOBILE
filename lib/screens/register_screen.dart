@@ -20,6 +20,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirmPassword = true;
   bool _isSubmitting = false;
 
+  String? _emailError;
+  String? _nameError;
+  String? _passwordError;
+  String? _confirmPasswordError;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.addListener(() {
+      if (_emailError != null) setState(() => _emailError = null);
+    });
+    _namaController.addListener(() {
+      if (_nameError != null) setState(() => _nameError = null);
+    });
+    _passwordController.addListener(() {
+      if (_passwordError != null) setState(() => _passwordError = null);
+    });
+    _confirmPasswordController.addListener(() {
+      if (_confirmPasswordError != null) {
+        setState(() => _confirmPasswordError = null);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -33,21 +57,55 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final email = _emailController.text.trim();
     final name = _namaController.text.trim();
     final password = _passwordController.text;
-    if (email.isEmpty || name.isEmpty || password.isEmpty ||
-        _confirmPasswordController.text.isEmpty) {
-      _showMessage('Email, nama, password, dan konfirmasi password wajib diisi.');
-      return;
+    final confirmPassword = _confirmPasswordController.text;
+
+    String? emailErr;
+    String? nameErr;
+    String? passwordErr;
+    String? confirmErr;
+
+    if (email.isEmpty) {
+      emailErr = 'Email wajib diisi.';
+    } else if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
+      emailErr = 'Format email tidak valid (contoh: user@gmail.com).';
     }
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
-      _showMessage('Format email tidak valid.');
-      return;
+
+    if (name.isEmpty) {
+      nameErr = 'Nama lengkap wajib diisi.';
+    } else if (name.length < 3) {
+      nameErr = 'Nama minimal 3 karakter.';
     }
-    if (password != _confirmPasswordController.text) {
-      _showMessage('Konfirmasi password tidak cocok dengan password.');
+
+    if (password.isEmpty) {
+      passwordErr = 'Password wajib diisi.';
+    } else if (password.length < 6) {
+      passwordErr = 'Password minimal 6 karakter.';
+    }
+
+    if (confirmPassword.isEmpty) {
+      confirmErr = 'Konfirmasi password wajib diisi.';
+    } else if (password != confirmPassword) {
+      confirmErr = 'Konfirmasi password tidak cocok dengan password.';
+    }
+
+    if (emailErr != null || nameErr != null || passwordErr != null || confirmErr != null) {
+      setState(() {
+        _emailError = emailErr;
+        _nameError = nameErr;
+        _passwordError = passwordErr;
+        _confirmPasswordError = confirmErr;
+      });
       return;
     }
 
-    setState(() => _isSubmitting = true);
+    setState(() {
+      _emailError = null;
+      _nameError = null;
+      _passwordError = null;
+      _confirmPasswordError = null;
+      _isSubmitting = true;
+    });
+
     try {
       await ApiService.instance.register(
         email: email,
@@ -59,6 +117,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     } on ApiException catch (error) {
+      setState(() {
+        final msg = error.message.toLowerCase();
+        if (error.field == 'email' || msg.contains('email')) {
+          _emailError = error.message;
+        } else if (error.field == 'name' || msg.contains('nama')) {
+          _nameError = error.message;
+        } else if (error.field == 'confirm_password' || msg.contains('konfirmasi')) {
+          _confirmPasswordError = error.message;
+        } else if (error.field == 'password' || msg.contains('password')) {
+          _passwordError = error.message;
+        }
+      });
       _showMessage(error.message);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -177,6 +247,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         horizontal: 14,
                         vertical: 12,
                       ),
+                      errorText: _emailError,
+                      errorMaxLines: 2,
+                      errorStyle: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w500,
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
@@ -188,6 +266,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
                           color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
+                          width: 1.2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
                           width: 1.5,
                         ),
                       ),
@@ -223,6 +315,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         horizontal: 14,
                         vertical: 12,
                       ),
+                      errorText: _nameError,
+                      errorMaxLines: 2,
+                      errorStyle: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w500,
+                      ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
@@ -234,6 +334,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
                           color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
+                          width: 1.2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
                           width: 1.5,
                         ),
                       ),
@@ -270,6 +384,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         horizontal: 14,
                         vertical: 12,
                       ),
+                      errorText: _passwordError,
+                      errorMaxLines: 2,
+                      errorStyle: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w500,
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
@@ -295,6 +417,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
                           color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
+                          width: 1.2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
                           width: 1.5,
                         ),
                       ),
@@ -331,6 +467,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         horizontal: 14,
                         vertical: 12,
                       ),
+                      errorText: _confirmPasswordError,
+                      errorMaxLines: 2,
+                      errorStyle: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: Colors.redAccent,
+                        fontWeight: FontWeight.w500,
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureConfirmPassword
@@ -356,6 +500,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(10),
                         borderSide: const BorderSide(
                           color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
+                          width: 1.2,
+                        ),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
                           width: 1.5,
                         ),
                       ),
