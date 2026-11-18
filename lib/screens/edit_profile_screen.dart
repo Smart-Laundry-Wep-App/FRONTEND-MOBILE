@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 import '../constants/colors.dart';
+import '../services/language_service.dart';
 
 class ProfileFormData {
   final String name;
@@ -10,6 +13,7 @@ class ProfileFormData {
   final String province;
   final String city;
   final String address;
+  final File? imageFile;
 
   const ProfileFormData({
     required this.name,
@@ -19,6 +23,7 @@ class ProfileFormData {
     required this.province,
     required this.city,
     required this.address,
+    this.imageFile,
   });
 }
 
@@ -55,6 +60,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   };
 
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _picker = ImagePicker();
+  File? _imageFile;
   late final TextEditingController _nameController;
   late final TextEditingController _usernameController;
   late final TextEditingController _emailController;
@@ -91,9 +98,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  String? _requiredValue(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Wajib diisi';
-    return null;
+  Future<void> _pickImage(ImageSource source) async {
+    final XFile? pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _imageFile = File(pickedFile.path);
+      });
+    }
+  }
+
+  void _showImagePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Pilih dari Galeri'),
+              onTap: () {
+                _pickImage(ImageSource.gallery);
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Ambil Foto'),
+              onTap: () {
+                _pickImage(ImageSource.camera);
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _saveProfile() {
@@ -108,6 +147,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         province: _province,
         city: _city,
         address: _addressController.text.trim(),
+        imageFile: _imageFile,
       ),
     );
   }
@@ -140,11 +180,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Edit Profil',
+                      LanguageService.tr('edit_prof_title'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -165,25 +205,58 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      Center(
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 50,
+                              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                              backgroundImage: _imageFile != null
+                                  ? FileImage(_imageFile!) as ImageProvider
+                                  : const AssetImage('assets/images/profile_avatar.png'),
+                            ),
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: InkWell(
+                                onTap: () => _showImagePicker(context),
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                       _buildTextField(
                         key: const Key('profile-name'),
-                        label: 'Nama Lengkap',
+                        label: LanguageService.tr('reg_field_name'),
                         controller: _nameController,
                       ),
                       const SizedBox(height: 12),
                       _buildTextField(
-                        label: 'Username',
+                        label: LanguageService.tr('edit_prof_username'),
                         controller: _usernameController,
                       ),
                       const SizedBox(height: 12),
                       _buildTextField(
-                        label: 'Email',
+                        label: LanguageService.tr('edit_prof_email'),
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 12),
                       _buildTextField(
-                        label: 'Nomor Telepon',
+                        label: LanguageService.tr('edit_prof_phone'),
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         prefix: _buildPhonePrefix(),
@@ -199,7 +272,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       const SizedBox(height: 12),
                       _buildTextField(
-                        label: 'Alamat',
+                        label: LanguageService.tr('edit_prof_address'),
                         controller: _addressController,
                       ),
                       const SizedBox(height: 52),
@@ -214,9 +287,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          child: const Text(
-                            'Simpan',
-                            style: TextStyle(
+                          child: Text(
+                            LanguageService.tr('common_save'),
+                            style: const TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -234,6 +307,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
+  }
+
+  String? _requiredValue(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return LanguageService.instance.t('Wajib diisi', 'Required');
+    }
+    return null;
   }
 
   Widget _buildTextField({

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/language_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
@@ -76,9 +77,9 @@ class _JamOperasionalScreenState extends State<JamOperasionalScreen> {
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.only(right: 36.0),
-                        child: const Text(
-                          'Jam Operasional',
-                          style: TextStyle(
+                        child: Text(
+                          LanguageService.tr('hours_title'),
+                          style: const TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 20,
                             fontWeight: FontWeight.w800,

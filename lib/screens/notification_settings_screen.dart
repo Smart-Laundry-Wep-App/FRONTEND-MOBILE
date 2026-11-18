@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/language_service.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   final Map<String, bool> initialSettings;
@@ -86,11 +87,11 @@ class _NotificationSettingsScreenState
                       ),
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Notifikasi',
+                      LanguageService.tr('notif_title'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 17,
                         fontWeight: FontWeight.w700,

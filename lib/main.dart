@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,8 +13,15 @@ import 'screens/profile_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/riwayat_pesanan_screen.dart';
 
-void main() {
+import 'services/api_config.dart';
+import 'services/auth_service.dart';
+import 'services/language_service.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiConfig.init();
+  await AuthService.instance.init();
+  await LanguageService.instance.init();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -27,19 +36,33 @@ class SCASmartLaundryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SCA Smart Laundry',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Poppins',
-        scaffoldBackgroundColor: AppColors.background,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          primary: AppColors.primary,
-        ),
-        useMaterial3: true,
-      ),
-      home: const ScreenPreviewShell(),
+    return ListenableBuilder(
+      listenable: LanguageService.instance,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'SCA Smart Laundry',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            fontFamily: 'Poppins',
+            scaffoldBackgroundColor: AppColors.background,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primary,
+              primary: AppColors.primary,
+            ),
+            useMaterial3: true,
+          ),
+          scrollBehavior: const MaterialScrollBehavior().copyWith(
+            dragDevices: {
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.touch,
+              PointerDeviceKind.stylus,
+              PointerDeviceKind.trackpad,
+              PointerDeviceKind.unknown,
+            },
+          ),
+          home: const ScreenPreviewShell(),
+        );
+      },
     );
   }
 }
@@ -67,15 +90,15 @@ class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
     ProfileScreen(),
   ];
 
-  final List<String> _screenTitles = const [
-    'Login',
-    'Register',
-    'Dashboard',
-    'Layanan',
-    'Jam Kerja',
-    'Promo',
-    'Riwayat',
-    'Profil',
+  List<String> get _screenTitles => [
+    LanguageService.tr('nav_login'),
+    LanguageService.tr('nav_register'),
+    LanguageService.tr('nav_dashboard'),
+    LanguageService.tr('nav_services'),
+    LanguageService.tr('nav_hours'),
+    LanguageService.tr('nav_promo'),
+    LanguageService.tr('nav_history'),
+    LanguageService.tr('nav_profile'),
   ];
 
   @override

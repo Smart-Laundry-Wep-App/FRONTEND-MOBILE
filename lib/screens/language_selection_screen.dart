@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/language_service.dart';
 
 class LanguageSelectionScreen extends StatelessWidget {
-  final String selectedLanguage;
+  final String? selectedLanguage;
 
-  const LanguageSelectionScreen({super.key, required this.selectedLanguage});
+  const LanguageSelectionScreen({super.key, this.selectedLanguage});
 
-  static const _languages = ['English (US)', 'Indonesia (INA)'];
+  static const _languages = [
+    LanguageService.english,
+    LanguageService.indonesian,
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final activeLang = selectedLanguage ?? LanguageService.instance.currentLanguage;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -37,11 +43,11 @@ class LanguageSelectionScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Bahasa',
+                      LanguageService.tr('lang_title'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -58,11 +64,11 @@ class LanguageSelectionScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 6),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: Text(
-                      'Suggested',
-                      style: TextStyle(
+                      LanguageService.tr('lang_suggested'),
+                      style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -73,8 +79,13 @@ class LanguageSelectionScreen extends StatelessWidget {
                   for (final language in _languages)
                     _LanguageOption(
                       language: language,
-                      isSelected: selectedLanguage == language,
-                      onTap: () => Navigator.pop(context, language),
+                      isSelected: activeLang == language,
+                      onTap: () async {
+                        await LanguageService.instance.setLanguage(language);
+                        if (context.mounted) {
+                          Navigator.pop(context, language);
+                        }
+                      },
                     ),
                 ],
               ),

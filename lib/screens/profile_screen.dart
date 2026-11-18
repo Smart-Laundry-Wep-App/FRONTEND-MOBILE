@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 
 import '../constants/colors.dart';
+import '../services/auth_service.dart';
+import '../services/language_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import 'dashboard_screen.dart';
 import 'edit_profile_screen.dart';
@@ -27,8 +30,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _province = 'Jawa Timur';
   String _city = 'Kota Malang';
   String _address = 'Jl. Bareng menuju IPK 4, Malang, Jawa Timur';
-  String _language = 'Indonesia (INA)';
+  String get _language => LanguageService.instance.currentLanguage;
+  File? _profileImage;
   Map<String, bool> _notificationSettings = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfile();
+    AuthService.instance.addListener(_loadUserProfile);
+  }
+
+  @override
+  void dispose() {
+    AuthService.instance.removeListener(_loadUserProfile);
+    super.dispose();
+  }
+
+  void _loadUserProfile() {
+    final user = AuthService.instance.currentUser;
+    if (user != null) {
+      setState(() {
+        if (user['name'] != null && (user['name'] as String).isNotEmpty) {
+          _name = user['name'] as String;
+        }
+        if (user['username'] != null && (user['username'] as String).isNotEmpty) {
+          _username = user['username'] as String;
+        }
+        if (user['email'] != null && (user['email'] as String).isNotEmpty) {
+          _email = user['email'] as String;
+        }
+        if (user['phone'] != null && (user['phone'] as String).isNotEmpty) {
+          _phone = user['phone'] as String;
+        }
+        if (user['province'] != null && (user['province'] as String).isNotEmpty) {
+          _province = user['province'] as String;
+        }
+        if (user['city'] != null && (user['city'] as String).isNotEmpty) {
+          _city = user['city'] as String;
+        }
+        if (user['address'] != null && (user['address'] as String).isNotEmpty) {
+          _address = user['address'] as String;
+        }
+        if (user['language'] != null && (user['language'] as String).isNotEmpty) {
+          LanguageService.instance.setLanguage(user['language'] as String);
+        }
+      });
+    }
+  }
 
   void _onBottomNavTap(int index) {
     if (index == 4) return;
@@ -40,10 +89,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       3 => const JamOperasionalScreen(),
       _ => const DashboardScreen(),
     };
-    if (index < 0 || index > 3) return;
 
-    Navigator.of(context)
-        .pushReplacement(MaterialPageRoute<void>(builder: (_) => destination));
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (context, animation1, animation2) => destination,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
+    );
   }
 
   void _goBack() {
@@ -51,7 +104,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Navigator.pop(context);
     } else {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(builder: (_) => const DashboardScreen()),
+        PageRouteBuilder(
+          pageBuilder: (context, animation1, animation2) => const DashboardScreen(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
       );
     }
   }
@@ -80,6 +137,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _province = profile.province;
         _city = profile.city;
         _address = profile.address;
+        if (profile.imageFile != null) {
+          _profileImage = profile.imageFile;
+        }
       });
     }
   }
@@ -92,7 +152,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (language != null && mounted) {
-      setState(() => _language = language);
+      await LanguageService.instance.setLanguage(language);
+      setState(() {});
     }
   }
 
@@ -181,31 +242,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text(
-          'Keluar Akun',
-          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w700),
+        title: Text(
+          LanguageService.tr('prof_logout_dialog_title'),
+          style: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w700),
         ),
-        content: const Text(
-          'Apakah Anda yakin ingin keluar dari akun?',
-          style: TextStyle(fontFamily: 'Poppins'),
+        content: Text(
+          LanguageService.tr('prof_logout_dialog_msg'),
+          style: const TextStyle(fontFamily: 'Poppins'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Batal'),
+            child: Text(LanguageService.tr('prof_logout_cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Keluar'),
+            child: Text(LanguageService.tr('prof_logout_confirm')),
           ),
         ],
       ),
     );
 
     if (shouldLogout == true && mounted) {
+      await AuthService.instance.logout();
+      if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(builder: (_) => const LoginScreen()),
         (route) => false,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(LanguageService.tr('prof_logout_success')),
+          duration: const Duration(seconds: 2),
+        ),
       );
     }
   }
@@ -229,13 +298,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Icons.arrow_back_rounded,
                         color: AppColors.primary,
                       ),
-                      tooltip: 'Kembali',
+                      tooltip: LanguageService.tr('common_back'),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Profil Pengguna',
+                        LanguageService.tr('prof_header'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -259,17 +328,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildMenuCard([
                       _ProfileMenuItem(
                         icon: Icons.badge_outlined,
-                        label: 'Edit Profil dan Informasi',
+                        label: LanguageService.tr('prof_edit'),
                         onTap: _editProfile,
                       ),
                       _ProfileMenuItem(
                         icon: Icons.location_on_outlined,
-                        label: 'Sesuaikan Lokasi',
+                        label: LanguageService.instance.t('Sesuaikan Lokasi', 'Adjust Location'),
                         onTap: _showLocationInfo,
                       ),
                       _ProfileMenuItem(
                         icon: Icons.translate_rounded,
-                        label: 'Bahasa',
+                        label: LanguageService.tr('prof_language'),
                         onTap: _chooseLanguage,
                         trailingLabel: _language == 'English (US)'
                             ? 'EN'
@@ -280,12 +349,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildMenuCard([
                       _ProfileMenuItem(
                         icon: Icons.notifications_none_rounded,
-                        label: 'Kelola Notifikasi',
+                        label: LanguageService.tr('prof_notification'),
                         onTap: _manageNotifications,
                       ),
                       _ProfileMenuItem(
                         icon: Icons.history_rounded,
-                        label: 'Riwayat Pesanan',
+                        label: LanguageService.tr('hist_title'),
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (_) => const RiwayatPesananScreen(),
@@ -297,12 +366,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildMenuCard([
                       _ProfileMenuItem(
                         icon: Icons.person_add_alt_1_rounded,
-                        label: 'Ganti Akun atau Tambah akun',
+                        label: LanguageService.instance.t('Ganti Akun atau Tambah akun', 'Switch or Add Account'),
                         onTap: _showAccountOptions,
                       ),
                       _ProfileMenuItem(
                         icon: Icons.logout_rounded,
-                        label: 'Keluar',
+                        label: LanguageService.tr('prof_logout'),
                         onTap: _confirmLogout,
                         isDestructive: true,
                       ),
@@ -342,25 +411,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Stack(
               clipBehavior: Clip.none,
               children: [
-                Container(
-                  key: const Key('profile-avatar'),
-                  width: 82,
-                  height: 82,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFFE9EAF8),
-                    border: Border.all(color: Colors.white, width: 3),
-                  ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/profile_avatar.png',
-                      width: 76,
-                      height: 76,
-                      fit: BoxFit.cover,
+                  Container(
+                    key: const Key('profile-avatar'),
+                    width: 82,
+                    height: 82,
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFE9EAF8),
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                    child: ClipOval(
+                      child: _profileImage != null
+                          ? Image.file(
+                              _profileImage!,
+                              width: 76,
+                              height: 76,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.asset(
+                              'assets/images/profile_avatar.png',
+                              width: 76,
+                              height: 76,
+                              fit: BoxFit.cover,
+                            ),
                     ),
                   ),
-                ),
                 Positioned(
                   right: -1,
                   bottom: 1,
@@ -368,14 +444,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: Colors.white,
                     shape: const CircleBorder(),
                     child: InkWell(
-                      onTap: _editProfile,
+                      onTap: () async {
+                        // Langsung panggil edit profile atau fungsi pilih foto
+                        await _editProfile();
+                      },
                       customBorder: const CircleBorder(),
                       child: const Padding(
                         padding: EdgeInsets.all(6),
                         child: Icon(
-                          Icons.edit_rounded,
+                          Icons.camera_alt_rounded,
                           size: 15,
-                          color: AppColors.textDark,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),

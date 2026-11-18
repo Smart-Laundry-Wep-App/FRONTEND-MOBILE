@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/auth_service.dart';
+import '../services/language_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'info_layanan_screen.dart';
@@ -22,6 +24,22 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final int _currentNavIndex = 2; // Center / Home Dashboard
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.addListener(_onAuthChanged);
+  }
+
+  @override
+  void dispose() {
+    AuthService.instance.removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (mounted) setState(() {});
+  }
 
   void _onNavTap(int index) {
     if (index == 1) {
@@ -91,8 +109,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () {
-              Navigator.pop(ctx);
+            onPressed: () async {
+              await AuthService.instance.logout();
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (!mounted) return;
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (_) => const LoginScreen()),
               );
@@ -201,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                'Rendra',
+                                AuthService.instance.displayName,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: (12.5 * scale).clamp(12.5, 15.0),
@@ -211,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                               ),
                               Text(
-                                'Customer',
+                                AuthService.instance.displayRole,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: (10.5 * scale).clamp(10.5, 12.5),
@@ -248,7 +268,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Scrollable Content
             Expanded(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
                 padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +299,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Layanan Laundry',
+                            LanguageService.instance.t('Layanan Laundry', 'Laundry Services'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Poppins',
@@ -289,7 +311,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Bersih, Rapih, Tepat Waktu',
+                            LanguageService.instance.t('Bersih, Rapih, Tepat Waktu', 'Clean, Neat, On Time'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Poppins',
@@ -309,7 +331,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildQuickActionItem(
-                          label: 'Pesanan',
+                          label: LanguageService.instance.t('Pesanan', 'Orders'),
                           icon: Icon(
                             Icons.shopping_cart_outlined,
                             color: AppColors.primary,
@@ -321,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         // 3. Flow Promo -> Page Promo
                         _buildQuickActionItem(
-                          label: 'Promo',
+                          label: LanguageService.instance.t('Promo', 'Promos'),
                           icon: Icon(
                             Icons.percent_rounded,
                             color: AppColors.primary,
@@ -332,7 +354,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           fontSize: quickActionFontSize,
                         ),
                         _buildQuickActionItem(
-                          label: 'Tracking',
+                          label: LanguageService.instance.t('Tracking', 'Tracking'),
                           icon: TrackingMapIcon(
                             size: quickActionIconSize,
                             color: AppColors.primary,
@@ -342,7 +364,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           fontSize: quickActionFontSize,
                         ),
                         _buildQuickActionItem(
-                          label: 'Hubungi',
+                          label: LanguageService.instance.t('Hubungi', 'Contact'),
                           icon: Icon(
                             Icons.help_outline_rounded,
                             color: AppColors.primary,
@@ -361,7 +383,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Info Layanan',
+                          LanguageService.instance.t('Info Layanan', 'Services Info'),
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: (16.0 * scale).clamp(16.0, 19.0),
@@ -372,7 +394,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         GestureDetector(
                           onTap: _navigateToInfoLayanan,
                           child: Text(
-                            'Lihat Semua',
+                            LanguageService.instance.t('Lihat Semua', 'View All'),
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: (12.0 * scale).clamp(12.0, 14.0),
@@ -435,7 +457,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Pesanan Aktif',
+                          LanguageService.instance.t('Pesanan Aktif', 'Active Orders'),
                           style: TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: (16.0 * scale).clamp(16.0, 19.0),
@@ -446,7 +468,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         GestureDetector(
                           onTap: _navigateToGpsTracking,
                           child: Text(
-                            'Lacak Status',
+                            LanguageService.instance.t('Lacak Status', 'Track Status'),
                             style: TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: (12.0 * scale).clamp(12.0, 14.0),
@@ -529,9 +551,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                             6,
                                           ),
                                         ),
-                                        child: const Text(
-                                          'Sedang Dicuci',
-                                          style: TextStyle(
+                                        child: Text(
+                                          LanguageService.instance.t('Sedang Dicuci', 'Washing in Progress'),
+                                          style: const TextStyle(
                                             fontFamily: 'Poppins',
                                             fontSize: 9.5,
                                             fontWeight: FontWeight.w600,

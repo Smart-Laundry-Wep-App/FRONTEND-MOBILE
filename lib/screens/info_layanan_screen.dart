@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/language_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
@@ -126,9 +127,9 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
                     child: Center(
                       child: Padding(
                         padding: const EdgeInsets.only(right: 36.0),
-                        child: const Text(
-                          'Info Layanan',
-                          style: TextStyle(
+                        child: Text(
+                          LanguageService.tr('srv_title'),
+                          style: const TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -170,9 +171,9 @@ class _InfoLayananScreenState extends State<InfoLayananScreen> {
                           ),
                           minimumSize: const Size(double.infinity, 44),
                         ),
-                        child: const Text(
-                          'Kembali',
-                          style: TextStyle(
+                        child: Text(
+                          LanguageService.tr('srv_back'),
+                          style: const TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 15,
                             fontWeight: FontWeight.w700,

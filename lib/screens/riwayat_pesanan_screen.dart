@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/language_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'dashboard_screen.dart';
@@ -34,7 +35,11 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
   int _selectedFilterIndex = 0; // 0: Semua, 1: Berlangsung, 2: Selesai
   String _selectedMonth = 'Nov 2026';
 
-  final List<String> _filters = const ['Semua', 'Berlangsung', 'Selesai'];
+  List<String> get _filters => [
+    LanguageService.instance.t('Semua', 'All'),
+    LanguageService.tr('hist_tab_active'),
+    LanguageService.tr('hist_tab_done'),
+  ];
 
   final List<RiwayatOrderItem> _orders = const [
     RiwayatOrderItem(
@@ -199,7 +204,7 @@ class _RiwayatPesananScreenState extends State<RiwayatPesananScreen> {
                   CircleBackButton(onTap: _onKembali),
                   const SizedBox(width: 18),
                   Text(
-                    'Riwayat Pesanan',
+                    LanguageService.tr('hist_title'),
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: (20.0 * scale).clamp(20.0, 23.0),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
+import '../services/auth_service.dart';
+import '../services/language_service.dart';
 import 'dashboard_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -17,6 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -27,10 +30,66 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _onLanjut() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+  void _showFeedback(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(fontFamily: 'Poppins', fontSize: 12),
+        ),
+        backgroundColor: isError ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      ),
     );
+  }
+
+  Future<void> _onLanjut() async {
+    final email = _emailController.text.trim();
+    final nama = _namaController.text.trim();
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (email.isEmpty || nama.isEmpty || password.isEmpty) {
+      _showFeedback('Nama, Email, dan Password wajib diisi.', isError: true);
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showFeedback('Konfirmasi password tidak cocok dengan password.', isError: true);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await AuthService.instance.register(
+        name: nama,
+        email: email,
+        password: password,
+        confirmPassword: confirmPassword,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result.success) {
+        _showFeedback('Registrasi berhasil! Selamat datang, $nama.');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        );
+      } else {
+        _showFeedback(result.message, isError: true);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showFeedback('Terjadi kesalahan: $e', isError: true);
+    }
   }
 
   void _onLoginTap() {
@@ -97,10 +156,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 12),
 
                   // Subtitle
-                  const Text(
-                    'Selamat Datang! Silahkan\nBuat Akun Anda',
+                  Text(
+                    LanguageService.instance.t(
+                      'Selamat Datang! Silahkan\nBuat Akun Anda',
+                      'Welcome! Please\nCreate Your Account',
+                    ),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
@@ -111,9 +173,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 22),
 
                   // Label: EMAIL
-                  const Text(
-                    'EMAIL',
-                    style: TextStyle(
+                  Text(
+                    LanguageService.tr('reg_field_email'),
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -158,9 +220,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 12),
 
                   // Label: NAMA
-                  const Text(
-                    'NAMA',
-                    style: TextStyle(
+                  Text(
+                    LanguageService.tr('reg_field_name'),
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -204,9 +266,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 12),
 
                   // Label: PASSWORD
-                  const Text(
-                    'PASSWORD',
-                    style: TextStyle(
+                  Text(
+                    LanguageService.tr('login_field_password'),
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -265,9 +327,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 12),
 
                   // Label: ULANGI PASSWORD
-                  const Text(
-                    'ULANGI PASSWORD',
-                    style: TextStyle(
+                  Text(
+                    LanguageService.tr('reg_field_confirm_pass'),
+                    style: const TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -327,7 +389,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                   // Button: Lanjut
                   ElevatedButton(
-                    onPressed: _onLanjut,
+                    onPressed: _isLoading ? null : _onLanjut,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -337,14 +399,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       minimumSize: const Size(double.infinity, 44),
                     ),
-                    child: const Text(
-                      'Lanjut',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : Text(
+                            LanguageService.instance.t('Lanjut', 'Continue'),
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 22),
 
@@ -353,9 +424,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: GestureDetector(
                       onTap: _onLoginTap,
                       child: RichText(
-                        text: const TextSpan(
-                          text: 'Sudah punya akun? ',
-                          style: TextStyle(
+                        text: TextSpan(
+                          text: '${LanguageService.tr('reg_has_account')} ',
+                          style: const TextStyle(
                             fontFamily: 'Poppins',
                             fontSize: 11,
                             fontWeight: FontWeight.w400,
@@ -363,8 +434,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           children: [
                             TextSpan(
-                              text: 'Login Sekarang',
-                              style: TextStyle(
+                              text: LanguageService.tr('reg_login_now'),
+                              style: const TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,

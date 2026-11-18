@@ -114,7 +114,7 @@ void main() {
     await tester.tap(find.text('Bahasa'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Suggested'), findsOneWidget);
+    expect(find.text('Pilihan Bahasa'), findsOneWidget);
     expect(find.text('English (US)'), findsOneWidget);
     expect(find.text('Indonesia (INA)'), findsOneWidget);
 
