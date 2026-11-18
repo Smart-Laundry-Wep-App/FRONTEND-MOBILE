@@ -61,7 +61,7 @@ class SCASmartLaundryApp extends StatelessWidget {
               PointerDeviceKind.unknown,
             },
           ),
-          home: const ScreenPreviewShell(),
+          home: ScreenPreviewShell(),
         );
       },
     );
@@ -96,7 +96,7 @@ class _ScreenPreviewShellState extends State<ScreenPreviewShell> {
     }
   }
 
-  final List<Widget> _screens = const [
+  List<Widget> get _screens => [
     LoginScreen(),
     RegisterScreen(),
     DashboardScreen(),

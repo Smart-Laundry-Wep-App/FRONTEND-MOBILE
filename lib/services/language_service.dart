@@ -27,10 +27,13 @@ class LanguageService extends ChangeNotifier {
   }
 
   Future<void> setLanguage(String language) async {
+    debugPrint('[LanguageService] setLanguage called: $language');
     if (_currentLanguage == language) return;
     _currentLanguage = language;
+    debugPrint('[LanguageService] Language updated to: $_currentLanguage');
     notifyListeners();
-
+    debugPrint('[LanguageService] notifyListeners called');
+    
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_prefKey, language);
