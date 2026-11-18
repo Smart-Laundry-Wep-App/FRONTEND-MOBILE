@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sca_smart_laundry/main.dart';
 import 'package:sca_smart_laundry/screens/dashboard_screen.dart';
 import 'package:sca_smart_laundry/screens/gps_tracking_screen.dart';
@@ -8,6 +9,9 @@ import 'package:sca_smart_laundry/screens/profile_screen.dart';
 import 'package:sca_smart_laundry/widgets/app_bottom_nav_bar.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
+
   testWidgets('App renders SCA Smart Laundry login screen', (
     WidgetTester tester,
   ) async {

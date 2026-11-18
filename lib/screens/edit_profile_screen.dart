@@ -242,17 +242,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         key: const Key('profile-name'),
                         label: LanguageService.tr('reg_field_name'),
                         controller: _nameController,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Nama lengkap wajib diisi';
+                          }
+                          if (value.trim().length < 3) {
+                            return 'Nama minimal 3 karakter';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
                       _buildTextField(
                         label: LanguageService.tr('edit_prof_username'),
                         controller: _usernameController,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Username wajib diisi';
+                          }
+                          if (value.trim().length < 3) {
+                            return 'Username minimal 3 karakter';
+                          }
+                          if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value.trim())) {
+                            return 'Hanya boleh huruf, angka, dan underscore (_)';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
                       _buildTextField(
                         label: LanguageService.tr('edit_prof_email'),
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Email wajib diisi';
+                          }
+                          if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(value.trim())) {
+                            return 'Format email tidak valid (contoh: user@gmail.com)';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
                       _buildTextField(
@@ -260,6 +290,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         prefix: _buildPhonePrefix(),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Nomor telepon wajib diisi';
+                          }
+                          final digits = value.replaceAll(RegExp(r'\D'), '');
+                          if (digits.length < 8 || digits.length > 13) {
+                            return 'Nomor telepon harus 8-13 digit angka';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -274,6 +314,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       _buildTextField(
                         label: LanguageService.tr('edit_prof_address'),
                         controller: _addressController,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Alamat wajib diisi';
+                          }
+                          if (value.trim().length < 5) {
+                            return 'Alamat minimal 5 karakter';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 52),
                       SizedBox(
@@ -322,12 +371,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     required TextEditingController controller,
     TextInputType? keyboardType,
     Widget? prefix,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       key: key,
       controller: controller,
       keyboardType: keyboardType,
-      validator: _requiredValue,
+      validator: validator ?? _requiredValue,
       style: const TextStyle(
         fontFamily: 'Poppins',
         fontSize: 12,
@@ -460,6 +510,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
         borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+      ),
+      errorMaxLines: 2,
+      errorStyle: const TextStyle(
+        fontFamily: 'Poppins',
+        fontSize: 10,
+        color: Colors.redAccent,
+        fontWeight: FontWeight.w500,
       ),
     );
   }

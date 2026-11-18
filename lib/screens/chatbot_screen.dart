@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 
 class ChatBotScreen extends StatefulWidget {
   const ChatBotScreen({super.key});
@@ -29,6 +30,39 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
     ),
     const _ChatMessage(text: 'Oke baik', fromBot: false),
   ];
+  bool _isSending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    if (!await ApiService.instance.hasSession) return;
+    try {
+      final history = await ApiService.instance.fetchChatHistory();
+      if (!mounted || history.isEmpty) return;
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(history.map((message) {
+            return _ChatMessage(
+              text: '${message['message'] ?? ''}',
+              fromBot: message['sender'] == 'bot' ||
+                  message['isFromBot'] == true,
+              showOrder: message['has_order_widget'] == true,
+            );
+          }));
+      });
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -37,14 +71,33 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
     super.dispose();
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-
-    setState(() {
-      _messages.add(_ChatMessage(text: text, fromBot: false));
-      _messageController.clear();
-    });
+    if (text.isEmpty || _isSending) return;
+    setState(() => _isSending = true);
+    try {
+      final response = await ApiService.instance.sendChatMessage(text);
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_ChatMessage(text: text, fromBot: false));
+        _messages.add(
+          _ChatMessage(
+            text: '${response['message'] ?? ''}',
+            fromBot: true,
+            showOrder: response['showOrder'] == true,
+          ),
+        );
+        _messageController.clear();
+      });
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -436,7 +489,7 @@ class _ChatBotScreenState extends State<ChatBotScreen> {
               ),
             ),
             IconButton(
-              onPressed: _sendMessage,
+              onPressed: _isSending ? null : _sendMessage,
               icon: const Icon(
                 Icons.send_rounded,
                 color: AppColors.primary,
