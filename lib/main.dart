@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,8 +13,13 @@ import 'screens/profile_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/riwayat_pesanan_screen.dart';
 
-void main() {
+import 'services/api_config.dart';
+import 'services/auth_service.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ApiConfig.init();
+  await AuthService.instance.init();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -38,6 +45,15 @@ class SCASmartLaundryApp extends StatelessWidget {
           primary: AppColors.primary,
         ),
         useMaterial3: true,
+      ),
+      scrollBehavior: const MaterialScrollBehavior().copyWith(
+        dragDevices: {
+          PointerDeviceKind.mouse,
+          PointerDeviceKind.touch,
+          PointerDeviceKind.stylus,
+          PointerDeviceKind.trackpad,
+          PointerDeviceKind.unknown,
+        },
       ),
       home: const ScreenPreviewShell(),
     );

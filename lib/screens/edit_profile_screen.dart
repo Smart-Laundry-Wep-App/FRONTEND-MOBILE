@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../constants/colors.dart';
+import '../services/auth_service.dart';
+import '../widgets/avatar_helper.dart';
 
 class ProfileFormData {
   final String name;
@@ -10,6 +14,9 @@ class ProfileFormData {
   final String province;
   final String city;
   final String address;
+  final String addressDetail;
+  final double latitude;
+  final double longitude;
 
   const ProfileFormData({
     required this.name,
@@ -19,6 +26,9 @@ class ProfileFormData {
     required this.province,
     required this.city,
     required this.address,
+    this.addressDetail = '',
+    this.latitude = -7.9826,
+    this.longitude = 112.6308,
   });
 }
 
@@ -30,6 +40,9 @@ class EditProfileScreen extends StatefulWidget {
   final String province;
   final String city;
   final String address;
+  final String addressDetail;
+  final double? latitude;
+  final double? longitude;
 
   const EditProfileScreen({
     super.key,
@@ -40,6 +53,9 @@ class EditProfileScreen extends StatefulWidget {
     required this.province,
     required this.city,
     required this.address,
+    this.addressDetail = '',
+    this.latitude,
+    this.longitude,
   });
 
   @override
@@ -54,14 +70,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'DKI Jakarta': ['Jakarta Selatan', 'Jakarta Timur'],
   };
 
+  // Titik koordinat acuan default (Kota Malang)
+  static const Map<String, LatLng> _cityCoordinates = {
+    'Kota Malang': LatLng(-7.9826, 112.6308),
+    'Kota Surabaya': LatLng(-7.2575, 112.7521),
+    'Kabupaten Malang': LatLng(-8.1633, 112.6074),
+    'Kota Bandung': LatLng(-6.9175, 107.6191),
+    'Kabupaten Bandung': LatLng(-7.0253, 107.5198),
+    'Kota Semarang': LatLng(-6.9667, 110.4167),
+    'Kabupaten Semarang': LatLng(-7.1993, 110.4072),
+    'Jakarta Selatan': LatLng(-6.2615, 106.8106),
+    'Jakarta Timur': LatLng(-6.2250, 106.9004),
+  };
+
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _usernameController;
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
+  late final TextEditingController _addressDetailController;
   late String _province;
   late String _city;
+
+  // Koordinat pinpoint yang dipilih di peta
+  late LatLng _selectedLocation;
+  late final MapController _mapController;
+  String? _avatarUrl;
 
   List<String> get _cities => _citiesByProvince[_province]!;
 
@@ -75,10 +110,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       text: widget.phone.replaceFirst(RegExp(r'^\+62\s*'), ''),
     );
     _addressController = TextEditingController(text: widget.address);
+    _addressDetailController = TextEditingController(text: widget.addressDetail);
     _province = _citiesByProvince.containsKey(widget.province)
         ? widget.province
         : 'Jawa Timur';
     _city = _cities.contains(widget.city) ? widget.city : _cities.first;
+
+    final initialLat = widget.latitude ?? _cityCoordinates[_city]?.latitude ?? -7.9826;
+    final initialLng = widget.longitude ?? _cityCoordinates[_city]?.longitude ?? 112.6308;
+    _selectedLocation = LatLng(initialLat, initialLng);
+    _mapController = MapController();
+    _avatarUrl = AuthService.instance.avatarUrl;
   }
 
   @override
@@ -88,6 +130,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _emailController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _addressDetailController.dispose();
     super.dispose();
   }
 
@@ -108,8 +151,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         province: _province,
         city: _city,
         address: _addressController.text.trim(),
+        addressDetail: _addressDetailController.text.trim(),
+        latitude: _selectedLocation.latitude,
+        longitude: _selectedLocation.longitude,
       ),
     );
+  }
+
+  void _changeAvatar() async {
+    final newAvatar = await AvatarHelper.pickProfileImage(context);
+    if (newAvatar != null && mounted) {
+      setState(() {
+        _avatarUrl = newAvatar;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto profil berhasil diubah!'),
+          backgroundColor: AppColors.primary,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _openFullMapPicker() async {
+    final result = await showDialog<LatLng>(
+      context: context,
+      builder: (ctx) => _FullScreenMapPickerDialog(
+        initialLocation: _selectedLocation,
+        currentAddress: _addressController.text.trim(),
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _selectedLocation = result;
+      });
+      _mapController.move(_selectedLocation, 15.5);
+    }
   }
 
   @override
@@ -159,12 +238,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Avatar Photo with Pencil Button
+                      Center(
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            GestureDetector(
+                              onTap: _changeAvatar,
+                              child: Container(
+                                width: 84,
+                                height: 84,
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: const Color(0xFFE9EAF8),
+                                  border: Border.all(color: AppColors.primary, width: 2),
+                                ),
+                                child: ClipOval(
+                                  child: AvatarHelper.buildAvatarWidget(
+                                    avatarSource: _avatarUrl,
+                                    size: 78,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: -2,
+                              bottom: 0,
+                              child: Material(
+                                color: AppColors.primary,
+                                shape: const CircleBorder(),
+                                elevation: 2,
+                                child: InkWell(
+                                  onTap: _changeAvatar,
+                                  customBorder: const CircleBorder(),
+                                  child: const Padding(
+                                    padding: EdgeInsets.all(6),
+                                    child: Icon(
+                                      Icons.edit_rounded,
+                                      size: 15,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 18),
                       _buildTextField(
                         key: const Key('profile-name'),
                         label: 'Nama Lengkap',
@@ -199,10 +327,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       ),
                       const SizedBox(height: 12),
                       _buildTextField(
-                        label: 'Alamat',
+                        label: 'Alamat Lengkap',
                         controller: _addressController,
                       ),
-                      const SizedBox(height: 52),
+                      const SizedBox(height: 12),
+
+                      // ==========================================
+                      // LAYOUT PINPOINT ALAMAT AKURAT (MAP ASLI)
+                      // ==========================================
+                      _buildPinpointMapCard(),
+
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        label: 'Detail Patokan / Catatan Kurir (Opsional)',
+                        controller: _addressDetailController,
+                        prefix: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          child: Icon(
+                            Icons.info_outline_rounded,
+                            size: 18,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 28),
                       SizedBox(
                         height: 52,
                         child: FilledButton(
@@ -232,6 +381,148 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Card widget untuk menandai titik lokasi alamat secara akurat di peta
+  Widget _buildPinpointMapCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.inputFill,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF8C91E8), width: 1),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.location_on_rounded,
+                color: Color(0xFFE53935),
+                size: 20,
+              ),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  'Tandai Titik Lokasi Akurat (Pinpoint)',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: _openFullMapPicker,
+                borderRadius: BorderRadius.circular(6),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.fullscreen_rounded, size: 16, color: AppColors.primary),
+                      SizedBox(width: 2),
+                      Text(
+                        'Perbesar',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Geser peta atau klik untuk menentukan titik penjemputan dan pengantaran laundry Anda.',
+            style: TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 10,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // Mini Map View
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              height: 140,
+              width: double.infinity,
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _selectedLocation,
+                      initialZoom: 15.0,
+                      onTap: (tapPosition, point) {
+                        setState(() {
+                          _selectedLocation = point;
+                        });
+                      },
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.scasmartlaundry.app',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _selectedLocation,
+                            width: 36,
+                            height: 36,
+                            child: const Icon(
+                              Icons.location_pin,
+                              color: Color(0xFFE53935),
+                              size: 36,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    right: 6,
+                    bottom: 6,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 3,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '${_selectedLocation.latitude.toStringAsFixed(5)}, ${_selectedLocation.longitude.toStringAsFixed(5)}',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textDark,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -286,6 +577,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         setState(() {
           _province = province;
           _city = _citiesByProvince[province]!.first;
+          final newLoc = _cityCoordinates[_city];
+          if (newLoc != null) {
+            _selectedLocation = newLoc;
+            _mapController.move(_selectedLocation, 15.0);
+          }
         });
       },
     );
@@ -311,7 +607,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           )
           .toList(),
       onChanged: (city) {
-        if (city != null) setState(() => _city = city);
+        if (city != null) {
+          setState(() {
+            _city = city;
+            final newLoc = _cityCoordinates[_city];
+            if (newLoc != null) {
+              _selectedLocation = newLoc;
+              _mapController.move(_selectedLocation, 15.0);
+            }
+          });
+        }
       },
     );
   }
@@ -380,6 +685,189 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
         borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+      ),
+    );
+  }
+}
+
+/// Dialog Pop-up Peta Penuh untuk memilih titik lokasi secara presisi
+class _FullScreenMapPickerDialog extends StatefulWidget {
+  final LatLng initialLocation;
+  final String currentAddress;
+
+  const _FullScreenMapPickerDialog({
+    required this.initialLocation,
+    required this.currentAddress,
+  });
+
+  @override
+  State<_FullScreenMapPickerDialog> createState() => _FullScreenMapPickerDialogState();
+}
+
+class _FullScreenMapPickerDialogState extends State<_FullScreenMapPickerDialog> {
+  late LatLng _currentLocation;
+  late final MapController _dialogMapController;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentLocation = widget.initialLocation;
+    _dialogMapController = MapController();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      backgroundColor: Colors.transparent,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          color: Colors.white,
+          height: MediaQuery.sizeOf(context).height * 0.75,
+          child: Stack(
+            children: [
+              // Map Penuh
+              FlutterMap(
+                mapController: _dialogMapController,
+                options: MapOptions(
+                  initialCenter: _currentLocation,
+                  initialZoom: 16.0,
+                  onTap: (tapPosition, point) {
+                    setState(() {
+                      _currentLocation = point;
+                    });
+                  },
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.scasmartlaundry.app',
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      Marker(
+                        point: _currentLocation,
+                        width: 44,
+                        height: 44,
+                        child: const Icon(
+                          Icons.location_pin,
+                          color: Color(0xFFE53935),
+                          size: 44,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // Header bar
+              Positioned(
+                top: 14,
+                left: 14,
+                right: 14,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.touch_app_rounded, color: AppColors.primary, size: 20),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Ketuk peta di titik alamat rumah Anda',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textDark,
+                          ),
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.close_rounded, color: AppColors.textDark),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Footer Confirm Bar
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.gps_fixed_rounded, size: 14, color: AppColors.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Koordinat: ${_currentLocation.latitude.toStringAsFixed(6)}, ${_currentLocation.longitude.toStringAsFixed(6)}',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: FilledButton.icon(
+                        onPressed: () => Navigator.pop(context, _currentLocation),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.check_circle_rounded, size: 18),
+                        label: const Text(
+                          'Gunakan Titik Lokasi Ini',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

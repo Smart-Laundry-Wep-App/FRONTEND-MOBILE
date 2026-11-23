@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/colors.dart';
+import '../services/auth_service.dart';
 import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'info_layanan_screen.dart';
@@ -22,6 +23,22 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final int _currentNavIndex = 2; // Center / Home Dashboard
+
+  @override
+  void initState() {
+    super.initState();
+    AuthService.instance.addListener(_onAuthChanged);
+  }
+
+  @override
+  void dispose() {
+    AuthService.instance.removeListener(_onAuthChanged);
+    super.dispose();
+  }
+
+  void _onAuthChanged() {
+    if (mounted) setState(() {});
+  }
 
   void _onNavTap(int index) {
     if (index == 1) {
@@ -91,11 +108,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
+            onPressed: () async {
+              await AuthService.instance.logout();
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (context.mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
+              }
             },
             child: const Text(
               'Keluar',
@@ -201,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                'Rendra',
+                                AuthService.instance.displayName,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: (12.5 * scale).clamp(12.5, 15.0),
@@ -211,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                               ),
                               Text(
-                                'Customer',
+                                AuthService.instance.displayRole,
                                 style: TextStyle(
                                   fontFamily: 'Poppins',
                                   fontSize: (10.5 * scale).clamp(10.5, 12.5),
@@ -248,7 +268,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Scrollable Content
             Expanded(
               child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+                physics: const AlwaysScrollableScrollPhysics(
+                  parent: BouncingScrollPhysics(),
+                ),
                 padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

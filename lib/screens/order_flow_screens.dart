@@ -7,7 +7,7 @@ import 'dashboard_screen.dart';
 class LaundryOrderDraft {
   String service = 'Cuci Kering';
   bool delivery = false;
-  int quantity = 1;
+  double quantity = 1.0;
   DateTime pickupDate = DateTime(2026, 9, 3);
   String pickupTime = '06.00 - 10.00';
   String paymentMethod = 'QRIS';
@@ -15,11 +15,30 @@ class LaundryOrderDraft {
   bool get isKiloService =>
       service == 'Cuci Kering' || service == 'Cuci Express';
   String get unit => isKiloService ? 'kg' : 'pcs';
-  String get quantityLabel => '$quantity $unit';
+
+  int get pricePerUnit => switch (service) {
+    'Cuci Kering' => 10000,
+    'Cuci Express' => 15000,
+    'Cuci Selimut' => 25000,
+    'Cuci Bed Cover' => 35000,
+    'Cuci Boneka' => 20000,
+    'Cuci Sepatu' => 30000,
+    'Wenter Pakaian' => 25000,
+    _ => 10000,
+  };
+
+  String get quantityLabel {
+    // Tampilkan format desimal rapi (misal 1.2 kg atau 1 kg jika bulat)
+    final formatted = quantity % 1 == 0
+        ? quantity.toInt().toString()
+        : quantity.toStringAsFixed(1).replaceAll('.', ',');
+    return '$formatted $unit';
+  }
+
   String get quantitySummaryLabel =>
       isKiloService ? 'Berat Total' : 'Jumlah Item';
-  String get priceLabel => 'Rp. 10.000/$unit';
-  int get total => quantity * 10000;
+  String get priceLabel => 'Rp ${_formatCurrency(pricePerUnit)}/$unit';
+  int get total => (quantity * pricePerUnit).round();
   String get serviceDisplayName =>
       service == 'Cuci Kering' ? '$service - Reguler' : service;
 }
@@ -239,6 +258,45 @@ class OrderDetailsScreen extends StatefulWidget {
 }
 
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
+  late final TextEditingController _qtyController;
+
+  @override
+  void initState() {
+    super.initState();
+    _qtyController = TextEditingController(
+      text: widget.order.quantity % 1 == 0
+          ? widget.order.quantity.toInt().toString()
+          : widget.order.quantity.toStringAsFixed(1).replaceAll('.', ','),
+    );
+  }
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    super.dispose();
+  }
+
+  void _onQtyChanged(String value) {
+    final clean = value.replaceAll(',', '.').trim();
+    final parsed = double.tryParse(clean);
+    if (parsed != null && parsed > 0) {
+      setState(() {
+        widget.order.quantity = parsed;
+      });
+    }
+  }
+
+  void _updateQuantity(double newQty) {
+    if (newQty < 0.1) return;
+    final rounded = double.parse(newQty.toStringAsFixed(1));
+    setState(() {
+      widget.order.quantity = rounded;
+      _qtyController.text = rounded % 1 == 0
+          ? rounded.toInt().toString()
+          : rounded.toStringAsFixed(1).replaceAll('.', ',');
+    });
+  }
+
   Future<void> _selectDate() async {
     final date = await showDatePicker(
       context: context,
@@ -342,27 +400,112 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           ),
           const SizedBox(height: 26),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Expanded(child: _SectionTitle('Jumlah')),
-              _SmallValue(widget.order.quantityLabel),
-              const SizedBox(width: 14),
+              // Input angka / desimal langsung
+              Container(
+                width: 72,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.inputFill,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFF8C91E8), width: 1),
+                ),
+                child: TextField(
+                  controller: _qtyController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                    border: InputBorder.none,
+                  ),
+                  onChanged: _onQtyChanged,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                widget.order.unit,
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
               _QuantityButton(
                 icon: Icons.remove,
-                onPressed: widget.order.quantity > 1
-                    ? () => setState(() => widget.order.quantity--)
+                onPressed: widget.order.quantity > 0.1
+                    ? () => _updateQuantity(widget.order.quantity - (widget.order.isKiloService ? 0.1 : 1.0))
                     : null,
               ),
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 5),
+                padding: EdgeInsets.symmetric(horizontal: 4),
                 child: Text('-', style: TextStyle(color: AppColors.primary)),
               ),
               _QuantityButton(
                 icon: Icons.add,
-                onPressed: () => setState(() => widget.order.quantity++),
+                onPressed: () => _updateQuantity(widget.order.quantity + (widget.order.isKiloService ? 0.1 : 1.0)),
               ),
             ],
           ),
-          const SizedBox(height: 52),
+          const SizedBox(height: 12),
+          // Total Harga Langsung (Live Price Calculation)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F3FD),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFC7CDFA), width: 1),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Total Harga Pembayaran',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      '${widget.order.quantityLabel} × Rp ${_formatCurrency(widget.order.pricePerUnit)}',
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 10,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  'Rp ${_formatCurrency(widget.order.total)}',
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
           const _SectionTitle('Jadwal Pengambilan'),
           const SizedBox(height: 14),
           _ScheduleTile(
@@ -973,28 +1116,6 @@ class _ContinueButton extends StatelessWidget {
   }
 }
 
-class _SmallValue extends StatelessWidget {
-  const _SmallValue(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      decoration: _cardDecoration(),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontFamily: 'Poppins',
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.primary,
-        ),
-      ),
-    );
-  }
-}
 
 class _QuantityButton extends StatelessWidget {
   const _QuantityButton({required this.icon, required this.onPressed});
