@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,6 +51,14 @@ class AuthService extends ChangeNotifier {
   String get displayRole {
     if (_currentUser == null) return 'Customer';
     return _currentUser!['role'] ?? 'Customer';
+  }
+
+  /// Profile image that can be updated via EditProfileScreen
+  File? _profileImage;
+  File? get profileImage => _profileImage;
+  set profileImage(File? image) {
+    _profileImage = image;
+    notifyListeners();
   }
 
   /// Inisialisasi AuthService dan pulihkan session yang tersimpan

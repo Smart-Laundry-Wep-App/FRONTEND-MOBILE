@@ -126,14 +126,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('EN'), findsOneWidget);
 
-    await tester.tap(find.text('Kelola Notifikasi'));
+    await tester.tap(find.text('Manage Notifications'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Notifikasi'), findsOneWidget);
+    expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Umum'), findsOneWidget);
-    expect(find.text('Pembaruan Sistem dan Layanan'), findsOneWidget);
-    expect(find.text('Lainnya'), findsOneWidget);
-    expect(find.text('Permintaan Pembayaran'), findsOneWidget);
+    expect(find.text('Pembaruan Aplikasi'), findsOneWidget);
+    expect(find.text('Pengingat Tagihan'), findsOneWidget);
+    expect(find.text('Promosi'), findsOneWidget);
 
     final firstSwitch = tester.getRect(
       find.byKey(const Key('notification-switch-Pembaruan Aplikasi')),
@@ -148,7 +148,7 @@ void main() {
     await tester.tap(find.byKey(const Key('notification-back')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Kelola Notifikasi'));
+    await tester.tap(find.text('Manage Notifications'));
     await tester.pumpAndSettle();
     expect(
       tester
@@ -160,20 +160,20 @@ void main() {
 
     await tester.tap(find.byKey(const Key('notification-back')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Edit Profil dan Informasi'));
+    await tester.tap(find.text('Edit Profile & Information'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Edit Profil'), findsOneWidget);
+    expect(find.text('Edit Profile'), findsOneWidget);
     expect(find.text('Username'), findsOneWidget);
     expect(find.text('Provinsi'), findsOneWidget);
     expect(find.text('Kota atau Kabupaten'), findsOneWidget);
-    expect(find.text('Alamat'), findsOneWidget);
+    expect(find.text('Full Address'), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('profile-name')),
       'Ardhiva Riyo',
     );
-    await tester.tap(find.text('Simpan'));
+    await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
     expect(find.text('Ardhiva Riyo'), findsOneWidget);

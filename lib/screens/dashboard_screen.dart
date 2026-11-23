@@ -7,7 +7,6 @@ import '../widgets/app_bottom_nav_bar.dart';
 import '../widgets/custom_icons.dart';
 import 'info_layanan_screen.dart';
 import 'jam_operasional_screen.dart';
-import 'login_screen.dart';
 import 'gps_tracking_screen.dart';
 import 'pusat_bantuan_screen.dart';
 import 'pesan_laundry_screen.dart';
@@ -88,43 +87,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _navigateToInfoLayanan() {
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const InfoLayananScreen()));
-  }
-
-  void _onLogout() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(
-          'Keluar Akun',
-          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          'Apakah Anda ingin kembali ke halaman Login?',
-          style: TextStyle(fontFamily: 'Poppins', fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal', style: TextStyle(fontFamily: 'Poppins')),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            onPressed: () async {
-              await AuthService.instance.logout();
-              if (ctx.mounted) Navigator.pop(ctx);
-              if (!mounted) return;
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            },
-            child: const Text(
-              'Keluar',
-              style: TextStyle(fontFamily: 'Poppins', color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -208,7 +170,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                   // Right: Rendra Customer + Profile Avatar
                   InkWell(
-                    onTap: _onLogout,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                      );
+                    },
                     borderRadius: BorderRadius.circular(20),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -243,18 +209,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ],
                           ),
                           const SizedBox(width: 8),
-                          // User Avatar Silhouette
+                          // User Avatar
                           Container(
                             width: (32.0 * scale).clamp(32.0, 40.0),
                             height: (32.0 * scale).clamp(32.0, 40.0),
-                            decoration: const BoxDecoration(
-                              color: Colors.transparent,
+                            decoration: BoxDecoration(
                               shape: BoxShape.circle,
+                              color: const Color(0xFFE9EAF8),
+                              border: Border.all(color: Colors.white, width: 1.5),
                             ),
-                            child: Icon(
-                              Icons.person_rounded,
-                              size: (32.0 * scale).clamp(32.0, 40.0),
-                              color: AppColors.textDark,
+                            child: ClipOval(
+                              child: AuthService.instance.profileImage != null
+                                  ? Image.file(
+                                      AuthService.instance.profileImage!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Image.asset(
+                                      'assets/images/profile_avatar.png',
+                                      fit: BoxFit.cover,
+                                    ),
                             ),
                           ),
                         ],

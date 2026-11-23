@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
 
 import '../constants/colors.dart';
 import '../services/auth_service.dart';
@@ -31,7 +30,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _city = 'Kota Malang';
   String _address = 'Jl. Bareng menuju IPK 4, Malang, Jawa Timur';
   String get _language => LanguageService.instance.currentLanguage;
-  File? _profileImage;
   Map<String, bool> _notificationSettings = {};
 
   @override
@@ -138,7 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _city = profile.city;
         _address = profile.address;
         if (profile.imageFile != null) {
-          _profileImage = profile.imageFile;
+          AuthService.instance.profileImage = profile.imageFile;
         }
       });
     }
@@ -422,9 +420,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       border: Border.all(color: Colors.white, width: 3),
                     ),
                     child: ClipOval(
-                      child: _profileImage != null
+                      child: AuthService.instance.profileImage != null
                           ? Image.file(
-                              _profileImage!,
+                              AuthService.instance.profileImage!,
                               width: 76,
                               height: 76,
                               fit: BoxFit.cover,
