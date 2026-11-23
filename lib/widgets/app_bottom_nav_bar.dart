@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/colors.dart';
+import '../services/language_service.dart';
 import 'custom_icons.dart';
 
 class AppBottomNavBar extends StatelessWidget {
@@ -46,7 +47,7 @@ class AppBottomNavBar extends StatelessWidget {
           // Nav 0: Riwayat
           _buildNavItem(
             index: 0,
-            label: 'Riwayat',
+            label: LanguageService.tr('bottom_history'),
             icon: HistoryPieIcon(
               size: (20.0 * scale).clamp(20.0, 24.0),
               color: currentIndex == 0 ? AppColors.primary : AppColors.textDark,
@@ -57,7 +58,7 @@ class AppBottomNavBar extends StatelessWidget {
           // Nav 1: Layanan
           _buildNavItem(
             index: 1,
-            label: 'Layanan',
+            label: LanguageService.tr('bottom_services'),
             icon: LayoutGridIcon(
               size: (20.0 * scale).clamp(20.0, 24.0),
               color: currentIndex == 1 ? AppColors.primary : AppColors.textDark,
@@ -104,7 +105,7 @@ class AppBottomNavBar extends StatelessWidget {
           // Nav 3: Jam Kerja
           _buildNavItem(
             index: 3,
-            label: 'Jam Kerja',
+            label: LanguageService.tr('bottom_hours'),
             icon: ClockArrowIcon(
               size: (20.0 * scale).clamp(20.0, 24.0),
               color: currentIndex == 3 ? AppColors.primary : AppColors.textDark,
@@ -115,7 +116,7 @@ class AppBottomNavBar extends StatelessWidget {
           // Nav 4: Profile
           _buildNavItem(
             index: 4,
-            label: 'Profile',
+            label: LanguageService.tr('bottom_profile'),
             icon: Icon(
               Icons.person_rounded,
               size: (22.0 * scale).clamp(22.0, 26.0),

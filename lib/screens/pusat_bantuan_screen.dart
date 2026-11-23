@@ -1,10 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/colors.dart';
+import '../services/api_service.dart';
 import 'chatbot_screen.dart';
 
-class PusatBantuanScreen extends StatelessWidget {
+class PusatBantuanScreen extends StatefulWidget {
   const PusatBantuanScreen({super.key});
+
+  @override
+  State<PusatBantuanScreen> createState() => _PusatBantuanScreenState();
+}
+
+class _PusatBantuanScreenState extends State<PusatBantuanScreen> {
+  Map<String, dynamic> _helpCenter = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHelpCenter();
+  }
+
+  Future<void> _loadHelpCenter() async {
+    try {
+      final result = await ApiService.instance.fetchHelpCenter();
+      if (mounted) setState(() => _helpCenter = result);
+    } on ApiException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+      }
+    }
+  }
+
+  Future<void> _contactAdmin() async {
+    final link = _helpCenter['admin']?['whatsapp'] as String?;
+    if (link == null || link.isEmpty) return;
+    final launched = await launchUrl(
+      Uri.parse(link),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('WhatsApp tidak dapat dibuka.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +102,10 @@ class PusatBantuanScreen extends StatelessWidget {
                       height: 120,
                       fit: BoxFit.contain,
                     ),
-                    title: 'CleanBOT Asisten 24/7',
-                    subtitle: '(Disarankan)',
+                    title: _helpCenter['bot']?['name'] as String? ??
+                        'CleanBOT Asisten 24/7',
+                    subtitle: _helpCenter['bot']?['badge'] as String? ??
+                        '(Disarankan)',
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -81,8 +125,11 @@ class PusatBantuanScreen extends StatelessWidget {
                         size: 70,
                       ),
                     ),
-                    title: 'Hubungi admin',
-                    subtitle: '(Slowrespon jika sibuk)',
+                    title: _helpCenter['admin']?['name'] as String? ??
+                        'Hubungi admin',
+                    subtitle: _helpCenter['admin']?['note'] as String? ??
+                        '(Slowrespon jika sibuk)',
+                    onTap: _contactAdmin,
                   ),
                 ],
               ),
