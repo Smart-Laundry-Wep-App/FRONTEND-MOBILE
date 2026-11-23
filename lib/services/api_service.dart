@@ -25,7 +25,7 @@ class ApiService {
   ApiService._();
 
   static final ApiService instance = ApiService._();
-  static const _tokenKey = 'sca_api_token';
+  static const _tokenKey = 'sca_auth_token';
   static const _promoKey = 'sca_applied_promo';
   static const _apiRoot = String.fromEnvironment(
     'API_BASE_URL',

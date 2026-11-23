@@ -81,10 +81,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _avatarUrl = user['avatar_url'] as String;
         }
         if (user['latitude'] != null) {
-          _latitude = (user['latitude'] as num).toDouble();
+          _latitude = double.tryParse(user['latitude'].toString()) ?? 0.0;
         }
         if (user['longitude'] != null) {
-          _longitude = (user['longitude'] as num).toDouble();
+          _longitude = double.tryParse(user['longitude'].toString()) ?? 0.0;
         }
         if (user['language'] != null && (user['language'] as String).isNotEmpty) {
           _language = user['language'] as String;
